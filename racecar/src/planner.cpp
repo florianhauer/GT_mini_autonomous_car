@@ -11,6 +11,7 @@
 
 ros::Publisher waypoint_pub;
 ros::Publisher traj_pub;
+ros::Publisher map_pub;
 
 geometry_msgs::PointStamped goal;
 geometry_msgs::PointStamped pose;
@@ -21,7 +22,7 @@ bool planned=false;
 
 std::deque<State<2>> current_path;//current pose not included
 
-double inflation_radius=0.8;
+double inflation_radius=0.4;
 nav_msgs::OccupancyGrid::Ptr local_map;
 
 double minX (const nav_msgs::MapMetaData& info) {
@@ -186,15 +187,15 @@ void plan(){
 	std::cout << "min bound : " << minState <<std::endl;
 	std::cout << "max bound : " << maxState <<std::endl;
 	//Set Tree Max Depth
-	int depth=6;
+	int depth=8;
 	t->setMaxDepth(depth);
 	MSP<2> algo(t);
 	//Set algo parameters
 	algo.setNewNeighboorCheck(true);
-	algo.setMapLearning(true,10,isObstacle);
+	algo.setMapLearning(true,100,isObstacle);
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
-	algo.setEpsilon(0.5);
+	algo.setEpsilon(0.1);
 	algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	std::cout << "start : " << startState <<std::endl;
@@ -255,6 +256,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 	//inflate
 	//update local map
 	local_map=occupancy_grid_utils::inflateObstacles(*msg,inflation_radius,true);
+	map_pub.publish(local_map);
 	if(!checkFeasibility()){
 		plan();
 	}
@@ -284,8 +286,9 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
-  waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 10);
-traj_pub = n.advertise<visualization_msgs::Marker>("/rviz_traj", 10);
+  waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
+  traj_pub = n.advertise<visualization_msgs::Marker>("/rviz_traj", 1);
+  map_pub = n.advertise<nav_msgs::OccupancyGrid>("/map_inflated", 1);
 
   ros::Subscriber goal_sub = n.subscribe("/goal_pose", 1, goalCallback);
   ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 1, poseCallback);
