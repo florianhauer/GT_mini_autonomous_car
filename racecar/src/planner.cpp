@@ -483,7 +483,7 @@ void RRTstar_planning(){
 	solved = optimizingPlanner->solve(1.0);
     }
     if(solved==ompl::base::PlannerStatus::StatusType::EXACT_SOLUTION){
-	std::vector< ob::State * > sol = boost::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
+	std::vector< ob::State * > sol = std::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
 	current_path_raw.resize(sol.size());
 	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), &obstateState);
 	/*std::cout << "Path length: " << pdef->getSolutionPath()->length() << std::endl;
@@ -594,9 +594,9 @@ void plan(){
 	planning=true;
 
 	//Run the desired planner
-	//RRTstar_planning();
+	RRTstar_planning();
 	//MSPP_planning();
-	Astar_planning();
+	//Astar_planning();
 
 	if(planned){
 		current_path=std::deque<State<2>>();

@@ -101,6 +101,7 @@ SET( CMAKE_CXX_FLAGS  "-std=c++0x" )
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+#include_directories(${occupancy_grid_utils_INCLUDE_DIRS})
 include_directories(${occupancy_grid_utils_INCLUDE_DIRS} , ${OMPL_INCLUDE_DIRS})
 
 ## Declare a cpp library
