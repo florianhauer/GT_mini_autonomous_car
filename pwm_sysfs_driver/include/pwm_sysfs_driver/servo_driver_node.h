@@ -14,6 +14,8 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <boost/shared_ptr.hpp>
+#include <racecar/EmergencyStop.h>
+#include <mutex>
 
 namespace pwm_sysfs_driver
 {
@@ -53,6 +55,14 @@ class ServoDriverNode
   ros::Subscriber command_sub_;
   bool setCommand(double command);
   void commandCallback(std_msgs::Float64::ConstPtr const& msg);
+
+  // emergency stop subscriber
+  ros::Subscriber estop_sub_;
+  void ESCallback(racecar::EmergencyStop::ConstPtr const& msg);
+
+  // mutex to protect overwrite in case of emergency stop
+  std::mutex write_mutex;
+  std::mutex estop_on;
 };
 
 } // namespace pwm_sysfs_driver

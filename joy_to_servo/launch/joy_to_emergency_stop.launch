@@ -1,0 +1,17 @@
+<!-- -*- mode: XML -*- -->
+<!--
+ This work is sponsored by the Department of the Air Force under Air Force
+ Contract FA8721-05-C-0002. Opinions, interpretations, conclusions, and
+ recommendations are those of the author and are not necessarily endorsed by
+ the United States Government.
+-->
+
+<launch>
+  <arg name="estop_button" default="1" />
+  <arg name="release_estop_button" default="0" />
+
+  <node pkg="joy_to_servo" type="joy_to_emergency_stop.py" name="joy_to_emergency_stop" output="screen">
+    <param name="estop_button" value="$(arg estop_button)" />
+    <param name="release_estop_button" value="$(arg release_estop_button)" />
+  </node>
+</launch>

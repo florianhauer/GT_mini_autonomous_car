@@ -20,6 +20,7 @@
   <arg name="disable_on_timeout" default="false" />
   <arg name="timeout_command" default="0" />
   <arg name="disable_on_exit" default="true" />
+  <arg name="estop_val_index" default="0" />
 
   <include file="$(find pwm_sysfs_driver)/launch/includes/servo_driver_$(arg type).launch.xml">
     <arg name="manager" value="$(arg manager)" />
@@ -34,5 +35,6 @@
     <arg name="disable_on_timeout" value="$(arg disable_on_timeout)" />
     <arg name="timeout_command" value="$(arg timeout_command)" />
     <arg name="disable_on_exit" value="$(arg disable_on_exit)" />
+    <arg name="estop_val_index" value="$(arg estop_val_index)" />
   </include>
 </launch>

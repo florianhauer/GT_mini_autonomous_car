@@ -147,6 +147,9 @@ ServoDriverNode::ServoDriverNode(ros::NodeHandle const& nh,
                              &ServoDriverNode::timerCallback, this);
   }
 
+
+  estop_sub_  = nh_.subscribe("/emergencyStop", 10,
+                               &ServoDriverNode::ESCallback, this);
   // input command topic subscription
   command_sub_ = nh_.subscribe("command", 10,
                                &ServoDriverNode::commandCallback, this);
@@ -182,15 +185,34 @@ bool ServoDriverNode::setCommand(double command)
   return true;
 }
 
+void ServoDriverNode::ESCallback(racecar::EmergencyStop::ConstPtr const& msg){
+  if(msg->estop){
+	if(estop_on.try_lock()){
+		//block the access
+		write_mutex.lock();
+		//send "safe" commands
+		int i;
+		nh_.param("estop_val_index", i, 0);
+		setCommand(msg->values[i]);
+	}
+  }else{
+	write_mutex.unlock();
+	estop_on.unlock();
+  }  
+}
+
 void ServoDriverNode::commandCallback(std_msgs::Float64::ConstPtr const& msg)
 {
-  if (setCommand(msg->data)) {
-    if (timeout_active_) {
-      ROS_WARN("Servo driver received a command, timeout condition is no "
-               "longer active.");
-    }
-    timeout_active_ = false;
-    last_command_msg_time_ = ros::Time::now();
+  if(write_mutex.try_lock()){
+	if (setCommand(msg->data)) {
+	if (timeout_active_) {
+	ROS_WARN("Servo driver received a command, timeout condition is no "
+	       "longer active.");
+	}
+	timeout_active_ = false;
+	last_command_msg_time_ = ros::Time::now();
+	}
+	write_mutex.unlock();
   }
 }
 
@@ -207,7 +229,10 @@ void ServoDriverNode::timerCallback(ros::TimerEvent const& event)
       enabled_ = false;
     }
     else {
-      setCommand(timeout_command_);
+      if(write_mutex.try_lock()){
+        setCommand(timeout_command_);
+	write_mutex.unlock();
+      }
     }
   }
 }
