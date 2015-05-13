@@ -19,4 +19,7 @@
     <arg name="steering_negative_gain" value="-1" />
   </include>
 
+  <include file="$(find joy_to_servo)/launch/joy_to_emergency_stop.launch">
+  </include>
+
 </launch>

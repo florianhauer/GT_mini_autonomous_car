@@ -7,6 +7,7 @@ project(racecar)
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
    message_generation
+   roscpp
 )
 
 ## System dependencies are found with CMake's conventions
@@ -99,7 +100,8 @@ catkin_package(
 # )
 
 ## Declare a cpp executable
-# add_executable(racecar_launch_node src/racecar_launch_node.cpp)
+add_executable(laser_to_estop src/laser_to_estop.cpp)
+target_link_libraries(laser_to_estop ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

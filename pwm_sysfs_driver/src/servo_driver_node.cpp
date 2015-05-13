@@ -192,7 +192,7 @@ void ServoDriverNode::ESCallback(racecar::EmergencyStop::ConstPtr const& msg){
 		write_mutex.lock();
 		//send "safe" commands
 		int i;
-		nh_.param("estop_val_index", i, 0);
+		nh_rel_.param("estop_val_index", i,0);
 		setCommand(msg->values[i]);
 	}
   }else{
