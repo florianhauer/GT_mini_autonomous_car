@@ -46,7 +46,9 @@ int main(int argc, char **argv)
 //    		  std::cout<<"transform possible" << std::endl;
 //    	  else
 //    		  std::cout << "fail :" << err << std::endl;
+    	  std::cout << "goal in map " << goal.point.x << " , " << goal.point.y <<std::endl;
 		  listener.transformPoint("base_link",goal,goalInOdom);
+    	  std::cout << "goal in odom " << goalInOdom.point.x << " , " << goalInOdom.point.y <<std::endl;
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
 		  std::cout << "theta " << theta/3.14159*180 << " , dist " << dist << std::endl;
