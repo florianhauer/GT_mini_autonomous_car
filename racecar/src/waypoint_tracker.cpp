@@ -10,6 +10,7 @@ geometry_msgs::PointStamped goal;
 
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
+  std::cout << "receiving goal update " << msg->point.x << "," << msg->point.y << std::endl;
   goal.header.frame_id=msg->header.frame_id;
   goal.header.stamp=msg->header.stamp;
   goal.point.x=msg->point.x;
