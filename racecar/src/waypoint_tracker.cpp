@@ -40,9 +40,9 @@ int main(int argc, char **argv)
   while (n.ok()){
       geometry_msgs::PointStamped goalInOdom;
       try{
-    	  goal.header.stamp=ros::Time::now();
+    	  goal.header.stamp=ros::Time::now()-ros::Duration(0.05);
     	  std::string err;
-    	  if(listener.canTransform("base_link","map",ros::Time::now()))
+    	  if(listener.canTransform("base_link","map",ros::Time::now()-ros::Duration(0.05)))
     		  std::cout<<"transform possible" << std::endl;
     	  else
     		  std::cout << "fail :" << err << std::endl;
