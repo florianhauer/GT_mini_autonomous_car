@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   while (n.ok()){
       geometry_msgs::PointStamped goalInOdom;
       try{
-		  listener.transformPoint("odom",goal,goalInOdom);
+		  listener.transformPoint("/odom",goal,goalInOdom);
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
 		  if(dist<0.2){
