@@ -10,8 +10,10 @@ geometry_msgs::PointStamped goal;
 
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
-  goal.header=msg->header;
-  goal.point=msg->point;
+  goal.header.frame_id=msg->header.frame_id;
+  goal.header.stamp=msg->header.stamp;
+  goal.point.x=msg->point.x;
+  goal.point.y=msg->point.y;
 }
 
 float sat(float val,float val_max){
