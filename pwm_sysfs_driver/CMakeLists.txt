@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pluginlib
   nodelet
+  racecar
 )
 
 ## System dependencies are found with CMake's conventions
@@ -94,7 +95,7 @@ find_package(Boost REQUIRED COMPONENTS)
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES pwm_sysfs_driver pwm_sysfs_driver_nodelet servo_driver_nodelet
- CATKIN_DEPENDS roscpp std_msgs pluginlib nodelet
+ CATKIN_DEPENDS roscpp std_msgs pluginlib nodelet racecar
  DEPENDS boost
 )
 

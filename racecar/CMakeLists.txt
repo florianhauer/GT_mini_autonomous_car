@@ -6,6 +6,7 @@ project(racecar)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
+   geometry_msgs
    message_generation
    roscpp
    interactive_markers
@@ -85,8 +86,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
-#  CATKIN_DEPENDS other_catkin_pkg
-  DEPENDS message_runtime
+#  CATKIN_DEPENDS other_catkin_pkg 
+  DEPENDS message_runtime std_msgs geometry_msgs tf
 )
 
 ###########
@@ -104,6 +105,7 @@ catkin_package(
 
 ## Declare a cpp executable
 add_executable(laser_to_estop src/laser_to_estop.cpp)
+add_dependencies(laser_to_estop racecar_generate_messages_cpp)
 target_link_libraries(laser_to_estop ${catkin_LIBRARIES})
 
 add_executable(goal_marker_node src/goal_marker_server.cpp)
