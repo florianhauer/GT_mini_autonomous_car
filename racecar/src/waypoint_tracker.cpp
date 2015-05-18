@@ -10,7 +10,8 @@ geometry_msgs::PointStamped goal;
 
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
-  goal=*msg;
+  goal.header=msg->header;
+  goal.point=msg->point;
 }
 
 float sat(float val,float val_max){
@@ -33,10 +34,18 @@ int main(int argc, char **argv)
 
   tf::TransformListener listener;
 
+  goal.header.stamp=ros::Time::now();
+  goal.header.frame_id="map";
   ros::Rate rate(10.0);
   while (n.ok()){
       geometry_msgs::PointStamped goalInOdom;
       try{
+    	  goal.header.stamp=ros::Time::now();
+    	  std::string err;
+    	  if(listener.canTransform("base_link","map",ros::Time::now()))
+    		  std::cout<<"transform possible" << std::endl;
+    	  else
+    		  std::cout << "fail :" << err << std::endl;
 		  listener.transformPoint("base_link",goal,goalInOdom);
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
