@@ -8,6 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
    std_msgs
    message_generation
    roscpp
+   interactive_markers
+   visualization_msgs 
+   tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -102,6 +105,12 @@ catkin_package(
 ## Declare a cpp executable
 add_executable(laser_to_estop src/laser_to_estop.cpp)
 target_link_libraries(laser_to_estop ${catkin_LIBRARIES})
+
+add_executable(goal_marker_node src/goal_marker_server.cpp)
+target_link_libraries(goal_marker_node ${catkin_LIBRARIES})
+
+add_executable(waypoint_tracker src/waypoint_tracker.cpp)
+target_link_libraries(waypoint_tracker ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

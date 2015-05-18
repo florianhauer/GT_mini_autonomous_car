@@ -9,6 +9,7 @@ double prev_range=1;
 ros::Time prev_time;
 double filtered_dist=1.0;
 double filtered_speed=0.0;
+double filter_alpha=0.8;
 
 void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	sensor_msgs::LaserScan::_ranges_type::const_iterator min_it=std::min_element(msg->ranges.begin(),msg->ranges.end());
@@ -29,8 +30,8 @@ void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	}
 	double closing_speed=(min_dist-prev_range)/((msg->header.stamp - prev_time).toSec());
 	//ROS_INFO("closing speed %f m/s" , closing_speed);
-	filtered_dist+=0.3*(min_dist-filtered_dist);
-	filtered_speed+=0.3*(closing_speed-filtered_speed);
+	filtered_dist=filter_alpha*filtered_dist+(1-filter_alpha)*min_dist;
+	filtered_speed=filter_alpha*filtered_speed+(1-filter_alpha)*closing_speed;
 	double impact_time=-filtered_dist/filtered_speed;
 //	double impact_time=-min_dist/closing_speed;
 	if(impact_time>0 & impact_time<1.5){
