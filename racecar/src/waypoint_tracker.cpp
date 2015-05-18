@@ -62,10 +62,10 @@ int main(int argc, char **argv)
 			  steering_pub.publish(zero);
 		  }else{
 			  std_msgs::Float64 throttle;
-			  throttle.data=sat(dist-0.1,0.5);
+			  throttle.data=sat(dist-0.1,0.75);
 			  throttle_pub.publish(throttle);
 			  std_msgs::Float64 steering;
-			  steering.data=sat(theta,1);
+			  steering.data=sat(-theta,1);
 			  steering_pub.publish(steering);
 		  }
       }
