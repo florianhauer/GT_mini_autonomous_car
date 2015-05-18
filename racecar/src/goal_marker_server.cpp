@@ -1,5 +1,5 @@
 #include <interactive_markers/interactive_marker_server.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PointStamped.h>
 
 ros::Publisher goal_pub;
 
@@ -10,8 +10,8 @@ void processFeedback(
 	  ROS_INFO_STREAM( feedback->marker_name << " is now at "
 		  << feedback->pose.position.x << ", " << feedback->pose.position.y
 		  << ", " << feedback->pose.position.z );
-	  geometry_msgs::PoseStamped pose_msg;
-	  pose_msg.pose=feedback->pose;
+	  geometry_msgs::PointStamped pose_msg;
+	  pose_msg.point=feedback->pose.position;
 	  pose_msg.header=feedback->header;
 	  goal_pub.publish(pose_msg);
 	}
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "goal_marker_node");
   ros::NodeHandle n;
-  goal_pub=n.advertise<geometry_msgs::PoseStamped>("/goal_pose", 10);
+  goal_pub=n.advertise<geometry_msgs::PointStamped>("/goal_pose", 10);
 
   // create an interactive marker server on the topic namespace simple_marker
   interactive_markers::InteractiveMarkerServer server("goal_marker_server");
