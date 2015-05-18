@@ -41,14 +41,15 @@ int main(int argc, char **argv)
       geometry_msgs::PointStamped goalInOdom;
       try{
     	  goal.header.stamp=ros::Time::now()-ros::Duration(0.05);
-    	  std::string err;
-    	  if(listener.canTransform("base_link","map",ros::Time::now()-ros::Duration(0.05)))
-    		  std::cout<<"transform possible" << std::endl;
-    	  else
-    		  std::cout << "fail :" << err << std::endl;
+//    	  std::string err;
+//    	  if(listener.canTransform("base_link","map",ros::Time::now()-ros::Duration(0.05)))
+//    		  std::cout<<"transform possible" << std::endl;
+//    	  else
+//    		  std::cout << "fail :" << err << std::endl;
 		  listener.transformPoint("base_link",goal,goalInOdom);
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
+		  std::cout << "theta " << theta/3.14159*180 << " , dist " << dist << std::endl;
 		  if(dist<0.2){
 			  std_msgs::Float64 zero;
 			  zero.data=0;
