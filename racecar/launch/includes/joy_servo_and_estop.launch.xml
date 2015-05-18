@@ -14,7 +14,7 @@
     <param name="coalesce_interval" value="0.01" />
   </node>
 
-  <include file="$(find joy_to_servo)/launch/joy_to_servo.launch">
+ <include file="$(find joy_to_servo)/launch/joy_to_servo.launch">
     <arg name="steering_positive_gain" value="-1" />
     <arg name="steering_negative_gain" value="-1" />
   </include>

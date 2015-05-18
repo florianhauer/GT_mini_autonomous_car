@@ -26,10 +26,10 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "talker");
   ros::NodeHandle n;
 
-  throttle_pub = n.advertise<std_msgs::Float32>("throttle_command", 10);
-  steering_pub = n.advertise<std_msgs::Float32>("steering_command", 10);
+  throttle_pub = n.advertise<std_msgs::Float32>("/throttle/command", 10);
+  steering_pub = n.advertise<std_msgs::Float32>("/steering/command", 10);
 
-  ros::Subscriber goal_sub = n.subscribe("goal_pose", 10, goalCallback);
+  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, goalCallback);
 
   tf::TransformListener listener;
 

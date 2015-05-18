@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "goal_marker_node");
   ros::NodeHandle n;
-  goal_pub=n.advertise<geometry_msgs::PoseStamped>("goal_pose", 10);
+  goal_pub=n.advertise<geometry_msgs::PoseStamped>("/goal_pose", 10);
 
   // create an interactive marker server on the topic namespace simple_marker
   interactive_markers::InteractiveMarkerServer server("goal_marker_server");
