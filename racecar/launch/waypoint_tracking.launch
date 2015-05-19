@@ -21,8 +21,14 @@
 	
   <include file="$(find racecar)/launch/mapping.launch" />
   
-  <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen"/>
+  <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen">
+    <param name="filter_alpha" value="0.8" />
+    <param name="max_min_dist" value="0.4" />
+    <param name="max_impact_time" value="1.5" />
+  </node>
+  
   <node pkg="racecar" type="goal_marker_node" name="goal_marker_node" output="screen"/>
+  
   <node pkg="racecar" type="waypoint_tracker" name="waypoint_tracker" output="screen">
     <param name="filter_alpha" value="0.8" />
     <param name="frequency" value="100.0" />
