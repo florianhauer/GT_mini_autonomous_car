@@ -26,9 +26,9 @@
   <node pkg="racecar" type="waypoint_tracker" name="waypoint_tracker" output="screen">
     <param name="filter_alpha" value="0.8" />
     <param name="frequency" value="100.0" />
-    <param name="throttle_max" value="1.0" />
-    <param name="throttle_min" value="0.75" />
-    <param name="throttle_gain" value="0.25" />
+    <param name="throttle_max" value="0.85" />
+    <param name="throttle_min" value="0.7" />
+    <param name="throttle_gain" value="0.2" />
     <param name="steering_gain" value="1.0" />
   </node>
 
