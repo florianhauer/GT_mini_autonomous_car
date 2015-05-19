@@ -29,6 +29,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "waypoint_tracker");
   ros::NodeHandle n;
+  ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
   throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 10);
   steering_pub = n.advertise<std_msgs::Float64>("/steering/command", 10);
@@ -39,12 +40,13 @@ int main(int argc, char **argv)
 
   //getting params
   double filter_alpha,frequency,throttle_max,throttle_min,throttle_gain,steering_gain;
-  n.param<double>("filter_alpha",filter_alpha,0.8);
-  n.param<double>("frequency",frequency,100.0);
-  n.param<double>("throttle_max",throttle_max,0.75);
-  n.param<double>("throttle_min",throttle_min,0.6);
-  n.param<double>("throttle_gain",throttle_gain,0.25);
-  n.param<double>("steering_gain",steering_gain,1.0);
+  nh_rel.param("filter_alpha",filter_alpha,0.8);
+  nh_rel.param("frequency",frequency,100.0);
+  nh_rel.param("throttle_max",throttle_max,0.75);
+  nh_rel.param("throttle_min",throttle_min,0.6);
+  nh_rel.param("throttle_gain",throttle_gain,0.25);
+  nh_rel.param("steering_gain",steering_gain,1.0);
+  std::cout << "throttle_max " << throttle_max << std::endl;
 
   double filtered_throttle=0;
   double filtered_steering=0;
@@ -76,7 +78,6 @@ int main(int argc, char **argv)
 		  }
       }catch (tf::TransformException &ex) {
 		  ROS_ERROR("%s",ex.what());
-		  continue;
       }
       rate.sleep();
       ros::spinOnce();
