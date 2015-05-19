@@ -39,17 +39,22 @@ int main(int argc, char **argv)
 
   goal.header.stamp=ros::Time::now();
   goal.header.frame_id="map";
-  ros::Rate rate(10.0);
+  ros::Rate rate(100.0);
+  float filtered_throttle=0;
+  float filtered_steering=0;
+  double filter_alpha=0.8;
   while (n.ok()){
       geometry_msgs::PointStamped goalInOdom;
       try{
-    	  goal.header.stamp=ros::Time::now()-ros::Duration(0.05);
+//    	  goal.header.stamp=ros::Time::now()-ros::Duration(0.5);
+    	  goal.header.stamp=ros::Time(0);
 //    	  std::string err;
 //    	  if(listener.canTransform("base_link","map",ros::Time::now()-ros::Duration(0.05)))
 //    		  std::cout<<"transform possible" << std::endl;
 //    	  else
 //    		  std::cout << "fail :" << err << std::endl;
 //    	  std::cout << "goal in map " << goal.point.x << " , " << goal.point.y <<std::endl;
+//		  listener.transformPoint("base_link",ros::Time(0),goal,"map",goalInOdom);
 		  listener.transformPoint("base_link",goal,goalInOdom);
 //    	  std::cout << "goal in odom " << goalInOdom.point.x << " , " << goalInOdom.point.y <<std::endl;
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
@@ -61,11 +66,13 @@ int main(int argc, char **argv)
 			  throttle_pub.publish(zero);
 			  steering_pub.publish(zero);
 		  }else{
+			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(dist-0.1,0.5);
 			  std_msgs::Float64 throttle;
-			  throttle.data=sat(dist-0.1,0.75);
+			  throttle.data=filtered_throttle;
 			  throttle_pub.publish(throttle);
+			  filtered_steering=filter_alpha*filtered_steering+(1-filter_alpha)*sat(-theta,1);
 			  std_msgs::Float64 steering;
-			  steering.data=sat(-theta,1);
+			  steering.data=filtered_steering;
 			  steering_pub.publish(steering);
 		  }
       }
