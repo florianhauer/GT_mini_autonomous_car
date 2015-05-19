@@ -231,7 +231,7 @@ void ServoDriverNode::timerCallback(ros::TimerEvent const& event)
     else {
       if(write_mutex.try_lock()){
         setCommand(timeout_command_);
-	write_mutex.unlock();
+        write_mutex.unlock();
       }
     }
   }
