@@ -12,7 +12,7 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
   std::cout << "receiving goal update " << msg->point.x << "," << msg->point.y << std::endl;
   goal.header.frame_id=msg->header.frame_id;
-  goal.header.stamp=msg->header.stamp;
+  goal.header.stamp=ros::Time(0);
   goal.point.x=msg->point.x;
   goal.point.y=msg->point.y;
 }
@@ -27,7 +27,7 @@ float sat(float val,float val_max){
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "talker");
+  ros::init(argc, argv, "waypoint_tracker");
   ros::NodeHandle n;
 
   throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 10);
@@ -37,49 +37,46 @@ int main(int argc, char **argv)
 
   tf::TransformListener listener;
 
-  goal.header.stamp=ros::Time::now();
+  //getting params
+  double filter_alpha,frequency,throttle_max,throttle_min,throttle_gain,steering_gain;
+  n.param<double>("filter_alpha",filter_alpha,0.8);
+  n.param<double>("frequency",frequency,100.0);
+  n.param<double>("throttle_max",throttle_max,0.75);
+  n.param<double>("throttle_min",throttle_min,0.6);
+  n.param<double>("throttle_gain",throttle_gain,0.25);
+  n.param<double>("steering_gain",steering_gain,1.0);
+
+  double filtered_throttle=0;
+  double filtered_steering=0;
+  geometry_msgs::PointStamped goalInOdom;
+  goal.header.stamp=ros::Time(0);
   goal.header.frame_id="map";
-  ros::Rate rate(100.0);
-  float filtered_throttle=0;
-  float filtered_steering=0;
-  double filter_alpha=0.8;
+
+  ros::Rate rate(frequency);
+
   while (n.ok()){
-      geometry_msgs::PointStamped goalInOdom;
       try{
-//    	  goal.header.stamp=ros::Time::now()-ros::Duration(0.5);
-    	  goal.header.stamp=ros::Time(0);
-//    	  std::string err;
-//    	  if(listener.canTransform("base_link","map",ros::Time::now()-ros::Duration(0.05)))
-//    		  std::cout<<"transform possible" << std::endl;
-//    	  else
-//    		  std::cout << "fail :" << err << std::endl;
-//    	  std::cout << "goal in map " << goal.point.x << " , " << goal.point.y <<std::endl;
-//		  listener.transformPoint("base_link",ros::Time(0),goal,"map",goalInOdom);
 		  listener.transformPoint("base_link",goal,goalInOdom);
-//    	  std::cout << "goal in odom " << goalInOdom.point.x << " , " << goalInOdom.point.y <<std::endl;
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
-//		  std::cout << "theta " << theta/3.14159*180 << " , dist " << dist << std::endl;
 		  if(dist<0.2){
 			  std_msgs::Float64 zero;
 			  zero.data=0;
 			  throttle_pub.publish(zero);
 			  steering_pub.publish(zero);
 		  }else{
-			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(0.25*dist+0.5,0.75);
+			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(throttle_gain*dist+throttle_min,throttle_max);
 			  std_msgs::Float64 throttle;
 			  throttle.data=filtered_throttle;
 			  throttle_pub.publish(throttle);
-			  filtered_steering=filter_alpha*filtered_steering+(1-filter_alpha)*sat(-theta,1);
+			  filtered_steering=filter_alpha*filtered_steering+(1-filter_alpha)*sat(-steering_gain*theta,1);
 			  std_msgs::Float64 steering;
 			  steering.data=filtered_steering;
 			  steering_pub.publish(steering);
 		  }
-      }
-      catch (tf::TransformException &ex) {
-        ROS_ERROR("%s",ex.what());
-        ros::Duration(1.0).sleep();
-        continue;
+      }catch (tf::TransformException &ex) {
+		  ROS_ERROR("%s",ex.what());
+		  continue;
       }
       rate.sleep();
       ros::spinOnce();
