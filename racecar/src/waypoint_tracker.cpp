@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 			  throttle_pub.publish(zero);
 			  steering_pub.publish(zero);
 		  }else{
-			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(0.25*dist+0.2,0.5);
+			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(0.25*dist+0.5,0.75);
 			  std_msgs::Float64 throttle;
 			  throttle.data=filtered_throttle;
 			  throttle_pub.publish(throttle);
