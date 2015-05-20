@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 		  }else{
 //			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(throttle_gain*dist+throttle_min,throttle_max);
 			  double Vd=sat(-throttle_dist_gain*dist,speed_max);
-			  double u=throttle_speed_gain*(Vd-filtered_speed);
+			  double u=-throttle_speed_gain*(Vd-filtered_speed);
 			  filtered_throttle=filter_alpha*filtered_throttle+(1-filter_alpha)*sat(u+throttle_min,throttle_max);
 			  std_msgs::Float64 throttle;
 			  throttle.data=filtered_throttle;
