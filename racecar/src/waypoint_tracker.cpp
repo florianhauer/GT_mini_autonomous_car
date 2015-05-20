@@ -65,6 +65,11 @@ int main(int argc, char **argv)
   while (n.ok()){
       try{
 		  listener.transformPoint("base_link",goal,goalInOdom);
+		  if(goalInOdom.header.stamp==prev_time){
+		      rate.sleep();
+		      ros::spinOnce();
+		      continue;
+		  }
 		  double theta=atan2(goalInOdom.point.y,goalInOdom.point.x);
 		  double dist=sqrt(goalInOdom.point.y*goalInOdom.point.y+goalInOdom.point.x*goalInOdom.point.x);
 		  filtered_dist=filter_alpha*filtered_dist+(1-filter_alpha)*dist;
