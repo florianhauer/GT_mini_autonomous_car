@@ -12,11 +12,11 @@
   <include file="$(find racecar)/launch/includes/joy_servo_and_estop.launch.xml" />
   <include file="$(find racecar)/launch/includes/steering.launch.xml" />
   <include file="$(find racecar)/launch/includes/throttle.launch.xml" />
-  <include file="$(find racecar)/launch/includes/sensors.launch.xml">
+  <!-- <include file="$(find racecar)/launch/includes/sensors.launch.xml">
     <arg name="run_camera" value="$(arg run_camera)" />
-  </include> 
+  </include> -->
   
-  <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen"/>
+  <!-- <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen"/> -->
   <!-- <node pkg="rosbag" type="record" name="bag_recorder"
 	args="record -o /media/HDD/bags/bag -a" /> -->
 
