@@ -77,7 +77,8 @@ bool isObstacle(State<2> state){
 	try{
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
 		int val=local_map->data[index];
-		//TODO (maybe use probabilities)
+		//TODO (maybe use probabilities
+		std::cout << val << std::endl;
 		if(val>50){
 			return true;
 		}else{
