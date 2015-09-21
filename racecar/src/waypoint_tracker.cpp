@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 10);
   steering_pub = n.advertise<std_msgs::Float64>("/steering/command", 10);
 
-  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, goalCallback);
+  ros::Subscriber goal_sub = n.subscribe("/waypoint", 10, goalCallback);
 
   tf::TransformListener listener;
 

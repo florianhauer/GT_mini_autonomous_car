@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
    interactive_markers
    visualization_msgs 
    tf
+   occupancy_grid_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -87,16 +88,18 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
 #  CATKIN_DEPENDS other_catkin_pkg 
-  DEPENDS message_runtime std_msgs geometry_msgs tf
+  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils
 )
 
 ###########
 ## Build ##
 ###########
 
+SET( CMAKE_CXX_FLAGS  "-std=c++0x" )
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(${occupancy_grid_utils_INCLUDE_DIRS})
 
 ## Declare a cpp library
 # add_library(racecar_launch
