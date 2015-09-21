@@ -106,6 +106,8 @@ void stop(){
 }
 
 void plan(){
+	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(0.5))
+		return;
 	planning=true;
 	stop();
 	//TODO
