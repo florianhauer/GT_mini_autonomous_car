@@ -78,7 +78,7 @@ bool isObstacle(State<2> state){
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
 		int val=local_map->data[index];
 		//TODO (maybe use probabilities
-		std::cout << val << std::endl;
+		//std::cout << val << std::endl;
 		if(val>50){
 			return true;
 		}else{
@@ -131,6 +131,7 @@ void plan(){
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
 	algo.setEpsilon(0.5);
+	algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	//Run algo
 	if(initAlgo && algo.run()){
