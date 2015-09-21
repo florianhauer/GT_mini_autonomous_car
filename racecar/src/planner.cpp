@@ -234,7 +234,7 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "waypoint_tracker");
+  ros::init(argc, argv, "planner");
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 

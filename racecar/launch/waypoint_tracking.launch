@@ -40,4 +40,6 @@
     <param name="steering_gain" value="1.0" />
   </node>
 
+<node pkg="racecar" type="planner" name="planner" output="screen"/>
+
 </launch>
