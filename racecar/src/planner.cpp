@@ -178,9 +178,8 @@ bool segmentFeasibility(State<2> a,State<2> b){
 
 bool checkFeasibility(){
 	//ROS_INFO("checking feasibility");
-	//return false;
 	if(!planned)
-		return false;;
+		return true;
 
 	//remove first waypoint if nescessary
 	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<0.5){
