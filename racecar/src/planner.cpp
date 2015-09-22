@@ -112,7 +112,7 @@ void stop(){
 
 void plan(){
 	ROS_INFO("planning");
-	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(0.5))
+	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
 		return;
 	planning=true;
 	stop();
