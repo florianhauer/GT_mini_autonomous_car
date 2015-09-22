@@ -182,9 +182,13 @@ bool checkFeasibility(){
 		return true;
 
 	//remove first waypoint if nescessary
-	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<0.5){
-		current_path.pop_front();
-		setWaypoint(current_path.front());
+	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<0.5){	
+		if(current_path.size()>0){
+			current_path.pop_front();
+			setWaypoint(current_path.front());
+		}else{
+			return true;
+		}
 	}
 	//check feasibility
 	//test feasibility from pose to first waypoint
@@ -254,7 +258,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 10);
-traj_pub = n.advertise<visualization_msgs::Marker>("rviz_traj", 10);
+traj_pub = n.advertise<visualization_msgs::Marker>("/rviz_traj", 10);
 
   ros::Subscriber goal_sub = n.subscribe("/goal_pose", 1, goalCallback);
   ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 1, poseCallback);
