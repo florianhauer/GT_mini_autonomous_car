@@ -7,9 +7,9 @@ void processFeedback(
     const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
 {
 	if(feedback->event_type==visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP ){
-	  ROS_INFO_STREAM( feedback->marker_name << " is now at "
+	  /*ROS_INFO_STREAM( feedback->marker_name << " is now at "
 		  << feedback->pose.position.x << ", " << feedback->pose.position.y
-		  << ", " << feedback->pose.position.z );
+		  << ", " << feedback->pose.position.z );*/
 	  geometry_msgs::PointStamped pose_msg;
 	  pose_msg.point=feedback->pose.position;
 	  pose_msg.header=feedback->header;

@@ -138,6 +138,7 @@ void plan(){
 	algo.setEpsilon(0.5);
 	algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
+	ROS_INFO_STREAM("Algo init "<<initAlgo<<", planning in progress ...");
 	//Run algo
 	if(initAlgo && algo.run()){
 		std::deque<State<2>> sol=algo.getPath();
@@ -176,7 +177,7 @@ bool segmentFeasibility(State<2> a,State<2> b){
 }
 
 bool checkFeasibility(){
-	ROS_INFO("checking feasibility");
+	//ROS_INFO("checking feasibility");
 	//return false;
 	if(!planned)
 		return false;;
@@ -218,7 +219,7 @@ void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 }
 
 void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
-	ROS_INFO("map update");
+	//ROS_INFO("map update");
 	if(planning)
 		return;
 	//inflate
