@@ -127,7 +127,7 @@ void plan(){
 	maxState[1]=maxY(local_map->info);
 	t->setStateBounds(minState,maxState);
 	//Set Tree Max Depth
-	int depth=10;
+	int depth=6;
 	t->setMaxDepth(depth);
 	MSP<2> algo(t);
 	//Set algo parameters
