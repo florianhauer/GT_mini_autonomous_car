@@ -91,8 +91,12 @@ bool isObstacle(State<2> state){
 }
 
 void sendWaypoint(){
-	if(planned)
+	waypoint.header.frame_id="/map";
+	waypoint.header.stamp=ros::Time::now();
+	if(planned){
 		waypoint_pub.publish(waypoint);
+		publishTraj();
+	}
 }
 
 void setWaypoint(State<2> s){
@@ -170,6 +174,7 @@ bool segmentFeasibility(State<2> a,State<2> b){
 }
 
 bool checkFeasibility(){
+	//return false;
 	if(!planned)
 		return true;
 
@@ -189,14 +194,14 @@ bool checkFeasibility(){
 	}
 }
 
-void poseCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	if(planning)
 		return;
 	//update local pose
 	 pose.header.frame_id=msg->header.frame_id;
 	 pose.header.stamp=ros::Time(0);
-	 pose.point.x=msg->point.x;
-	 pose.point.y=msg->point.y;
+	 pose.point.x=msg->pose.position.x;
+	 pose.point.y=msg->pose.position.y;
 
 	startState[0]=pose.point.x;
 	startState[1]=pose.point.y;

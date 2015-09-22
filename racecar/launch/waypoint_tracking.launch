@@ -29,7 +29,7 @@
   
   <node pkg="racecar" type="goal_marker_node" name="goal_marker_node" output="screen"/>
   
-  <node pkg="racecar" type="waypoint_tracker" name="waypoint_tracker" output="screen">
+  <node pkg="racecar" type="waypoint_tracker" name="waypoint_tracker">
     <param name="filter_alpha" value="0.8" />
     <param name="frequency" value="100.0" />
     <param name="speed_max" value="1.0" />
