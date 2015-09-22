@@ -85,7 +85,7 @@ bool isObstacle(State<2> state){
 			return false;
 		}
 	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
-		return false;
+		return true;
 	}
 	
 }
@@ -126,7 +126,7 @@ void plan(){
 	maxState[1]=maxY(local_map->info);
 	t->setStateBounds(minState,maxState);
 	//Set Tree Max Depth
-	int depth=5;
+	int depth=10;
 	t->setMaxDepth(depth);
 	MSP<2> algo(t);
 	//Set algo parameters
@@ -147,12 +147,12 @@ void plan(){
 			std::cout << (*it) << " -- ";
 		}
 		std::cout << std::endl;
-		std::cout << "smoothed solution" <<std::endl;
+		/*std::cout << "smoothed solution" <<std::endl;
 		sol=algo.getSmoothedPath();
 		std::cout << "Path length: " << sol.size() << std::endl;
 		for(std::deque<State<2>>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
-		}
+		}*/
 		current_path=sol;
 		//current_path.push_front(startState);
 		current_path.push_back(goalState);
@@ -171,12 +171,13 @@ bool segmentFeasibility(State<2> a,State<2> b){
 		if(isObstacle(a+inc*i))
 			return false;
 	}
+	return true;
 }
 
 bool checkFeasibility(){
 	//return false;
 	if(!planned)
-		return true;
+		return false;;
 
 	//remove first waypoint if nescessary
 	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<0.5){
@@ -192,6 +193,7 @@ bool checkFeasibility(){
 		if(!segmentFeasibility(current_path[i],current_path[i+1]))
 		return false;
 	}
+	return true;
 }
 
 void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
@@ -206,7 +208,7 @@ void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	startState[0]=pose.point.x;
 	startState[1]=pose.point.y;
 
-	if(checkFeasibility()){
+	if(!checkFeasibility()){
 		plan();
 	}
 	sendWaypoint();
@@ -218,7 +220,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 	//inflate
 	//update local map
 	local_map=occupancy_grid_utils::inflateObstacles(*msg,inflation_radius,true);
-	if(checkFeasibility()){
+	if(!checkFeasibility()){
 		plan();
 	}
 	sendWaypoint();
@@ -250,9 +252,9 @@ int main(int argc, char **argv)
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 10);
 traj_pub = n.advertise<visualization_msgs::Marker>("rviz_traj", 10);
 
-  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, goalCallback);
-  ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 10, poseCallback);
-  ros::Subscriber map_sub = n.subscribe("/map", 10, mapCallback);
+  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 1, goalCallback);
+  ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 1, poseCallback);
+  ros::Subscriber map_sub = n.subscribe("/map", 1, mapCallback);
 
 
 
