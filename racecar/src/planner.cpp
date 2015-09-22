@@ -111,6 +111,7 @@ void stop(){
 }
 
 void plan(){
+	ROS_INFO("planning");
 	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(0.5))
 		return;
 	planning=true;
@@ -175,6 +176,7 @@ bool segmentFeasibility(State<2> a,State<2> b){
 }
 
 bool checkFeasibility(){
+	ROS_INFO("checking feasibility");
 	//return false;
 	if(!planned)
 		return false;;
@@ -197,6 +199,7 @@ bool checkFeasibility(){
 }
 
 void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+	//ROS_INFO_STREAM("pose update: "<< msg->pose.position.x << "," << msg->pose.position.y);
 	if(planning)
 		return;
 	//update local pose
@@ -215,6 +218,7 @@ void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 }
 
 void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
+	ROS_INFO("map update");
 	if(planning)
 		return;
 	//inflate
@@ -227,10 +231,10 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 }
 
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
+	ROS_INFO_STREAM("goal update: "<< msg->point.x << "," << msg->point.y);
 	if(planning)
 		return;
 	//update local goal
-	std::cout << "receiving goal update " << msg->point.x << "," << msg->point.y << std::endl;
 	goal.header.frame_id=msg->header.frame_id;
 	goal.header.stamp=ros::Time(0);
 	goal.point.x=msg->point.x;
