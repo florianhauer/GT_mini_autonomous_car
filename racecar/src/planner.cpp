@@ -70,26 +70,6 @@ void publishTraj(){
 	traj_pub.publish(traj_visu);
 }
 
-bool isObstacle(State<2> state){
-	geometry_msgs::Point point;
-	point.x=state[0];
-	point.y=state[1];
-	try{
-		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
-		int val=local_map->data[index];
-		//TODO (maybe use probabilities
-		//std::cout << val << std::endl;
-		if(val>50){
-			return true;
-		}else{
-			return false;
-		}
-	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
-		return true;
-	}
-	
-}
-
 void sendWaypoint(){
 	waypoint.header.frame_id="/map";
 	waypoint.header.stamp=ros::Time::now();
@@ -110,58 +90,24 @@ void stop(){
 	sendWaypoint();
 }
 
-void plan(){
-	ROS_INFO("planning");
-	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
-		return;
-	planning=true;
-	stop();
-	//TODO
-	Tree<2>* t=new Tree<2>();
-	//Set Search Space Bounds
-	State<2> minState;
-	minState[0]=minX(local_map->info);
-	minState[1]=minY(local_map->info);
-	State<2> maxState;
-	maxState[0]=maxX(local_map->info);
-	maxState[1]=maxY(local_map->info);
-	t->setStateBounds(minState,maxState);
-	//Set Tree Max Depth
-	int depth=6;
-	t->setMaxDepth(depth);
-	MSP<2> algo(t);
-	//Set algo parameters
-	algo.setNewNeighboorCheck(true);
-	algo.setMapLearning(true,10,isObstacle);
-	algo.setSpeedUp(true);
-	algo.setAlpha(2*sqrt(2));
-	algo.setEpsilon(0.5);
-	algo.setMinRGcalc(true);
-	bool initAlgo=algo.init(startState,goalState);
-	ROS_INFO_STREAM("Algo init "<<initAlgo<<", planning in progress ...");
-	//Run algo
-	if(initAlgo && algo.run()){
-		std::deque<State<2>> sol=algo.getPath();
-		std::cout << "Path length: " << sol.size() << std::endl;
-		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
-		std::cout << "Path :" << std::endl;
-		for(std::deque<State<2>>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
-			std::cout << (*it) << " -- ";
+bool isObstacle(State<2> state){
+	geometry_msgs::Point point;
+	point.x=state[0];
+	point.y=state[1];
+	try{
+		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
+		int val=local_map->data[index];
+		//TODO (maybe use probabilities
+		//std::cout << val << std::endl;
+		if(val>50){
+			return true;
+		}else{
+			return false;
 		}
-		std::cout << std::endl;
-		/*std::cout << "smoothed solution" <<std::endl;
-		sol=algo.getSmoothedPath();
-		std::cout << "Path length: " << sol.size() << std::endl;
-		for(std::deque<State<2>>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
-			std::cout << (*it) << " -- ";
-		}*/
-		current_path=sol;
-		//current_path.push_front(startState);
-		current_path.push_back(goalState);
-		setWaypoint(current_path.front());
+	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
+		return true;
 	}
-	planned=true;
-	planning=false;
+	
 }
 
 bool segmentFeasibility(State<2> a,State<2> b){
@@ -174,6 +120,25 @@ bool segmentFeasibility(State<2> a,State<2> b){
 			return false;
 	}
 	return true;
+}
+
+void smoothTraj(){
+	if(!planned || current_path.size()<2)
+		return;
+	int i=1;
+	State<2> a=startState;
+	State<2> b=current_path[i];
+	while(i<current_path.size()){ // situtation always is of type a->m->b->n
+		//if a->b feasible, remove m and set b=n to try to remove b
+		if(segmentFeasibility(a,b)){
+			current_path.erase(current_path.begin()+i-1);
+			b=current_path[i];
+		}else{ // if a->b unfeasible, we need to keep a->m, so a becomes m, b becomes n to try to remove the previous b 
+			a=current_path[i-1];
+			i++;
+			b=current_path[i];
+		}
+	}
 }
 
 bool checkFeasibility(){
@@ -200,6 +165,68 @@ bool checkFeasibility(){
 		return false;
 	}
 	return true;
+}
+
+void plan(){
+	ROS_INFO("planning");
+	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
+		return;
+	planning=true;
+	stop();
+	//TODO
+	Tree<2>* t=new Tree<2>();
+	//Set Search Space Bounds
+	State<2> minState;
+	minState[0]=minX(local_map->info);
+	minState[1]=minY(local_map->info);
+	State<2> maxState;
+	maxState[0]=maxX(local_map->info);
+	maxState[1]=maxY(local_map->info);
+	t->setStateBounds(minState,maxState);
+	std::cout << "min bound : " << minState <<std::endl;
+	std::cout << "max bound : " << maxState <<std::endl;
+	//Set Tree Max Depth
+	int depth=6;
+	t->setMaxDepth(depth);
+	MSP<2> algo(t);
+	//Set algo parameters
+	algo.setNewNeighboorCheck(true);
+	algo.setMapLearning(true,10,isObstacle);
+	algo.setSpeedUp(true);
+	algo.setAlpha(2*sqrt(2));
+	algo.setEpsilon(0.5);
+	algo.setMinRGcalc(true);
+	bool initAlgo=algo.init(startState,goalState);
+	std::cout << "start : " << startState <<std::endl;
+	std::cout << "goal : " << goalState <<std::endl;
+	std::cout << "init : " << initAlgo <<std::endl;
+	//Run algo
+	if(initAlgo && algo.run()){
+		ROS_INFO_STREAM("Algo init "<<initAlgo<<", planning in progress ...");	
+		std::deque<State<2>> sol=algo.getPath();
+		std::cout << "Path length: " << sol.size() << std::endl;
+		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
+		std::cout << "Path :" << std::endl;
+		for(std::deque<State<2>>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
+			std::cout << (*it) << " -- ";
+		}
+		std::cout << std::endl;
+		current_path=sol;
+		current_path.push_back(goalState);
+		//*
+		std::cout << "smoothed solution" <<std::endl;
+		smoothTraj();
+		std::cout << "Path length: " << current_path.size() << std::endl;
+		for(std::deque<State<2>>::iterator it=current_path.begin(),end=current_path.end();it!=end;++it){
+			std::cout << (*it) << " -- ";
+		}//*/
+		setWaypoint(current_path.front());
+		planned=true;
+	}else{
+		ROS_INFO("Planning failed");
+		planned=false;
+	}
+	planning=false;
 }
 
 void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
