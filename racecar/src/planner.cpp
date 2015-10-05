@@ -10,7 +10,8 @@
 #include <msp/MSP.h>
 
 ros::Publisher waypoint_pub;
-ros::Publisher traj_pub;
+ros::Publisher traj_pub_raw;
+ros::Publisher traj_pub_smooth;
 ros::Publisher map_pub;
 
 geometry_msgs::PointStamped goal;
@@ -21,8 +22,15 @@ bool planning=false;
 bool planned=false;
 
 std::deque<State<2>> current_path;//current pose not included
+std::deque<State<2>> current_path_raw;//current pose not included
 
-double inflation_radius=0.4;
+//parameters set in the launch file
+double inflation_radius=0.3;
+double waypoint_check_distance=0.3;
+int depth=8;
+int nb_obstacle_check=100;
+double epsilon=0.1;
+
 nav_msgs::OccupancyGrid::Ptr local_map;
 
 double minX (const nav_msgs::MapMetaData& info) {
@@ -68,7 +76,26 @@ void publishTraj(){
 		p.z=0.1;
 		traj_visu.points.push_back(p);
 	}
-	traj_pub.publish(traj_visu);
+	traj_pub_smooth.publish(traj_visu);
+
+	traj_visu.points.clear();
+	traj_visu.header.stamp=ros::Time::now();
+	traj_visu.ns="traj_raw";
+	traj_visu.id=2;
+
+	traj_visu.color.r = 0.0;
+	traj_visu.color.g = 1.0;
+
+	traj_visu.points.push_back(pose.point);
+
+	for(int i=0;i<current_path_raw.size();++i){
+		geometry_msgs::Point p;
+		p.x=current_path_raw[i][0];
+		p.y=current_path_raw[i][1];
+		p.z=0.1;
+		traj_visu.points.push_back(p);
+	}
+	traj_pub_raw.publish(traj_visu);
 }
 
 void sendWaypoint(){
@@ -111,6 +138,53 @@ bool isObstacle(State<2> state){
 	
 }
 
+int Ocount=0;
+time_t timerStart;
+
+bool addObstacles(Key<2> k, int depth, int size, Tree<2>* t){
+	if(depth==t->getMaxDepth()){
+		Ocount++;
+		if(Ocount%((int)pow(2,8))==0){
+			std::cout << "\r" << "Obstacle creation " << std::setw(10) << Ocount*100.0/pow(2,2*depth) << "\% done, ";
+			time_t timerNow=time(NULL);	
+			int seconds = (int)difftime(timerNow,timerStart);
+			seconds=(int)(seconds*(1-( Ocount/pow(2,2*depth)))/( Ocount/pow(2,2*depth)));
+			int hours = seconds/3600;
+			int minutes= (seconds/60)%60;
+			seconds=seconds%60;
+			std::cout << "time left: " 	<< std::setw(4) << hours << ":" 
+							<< std::setw(2) << minutes << ":" 
+							<< std::setw(2) << seconds;
+		}
+		//finest resolution: update obstacle presence
+		//if obstacles
+		if(isObstacle(t->getState(k))){
+			//add obstacle to the tree
+			t->addObstacle(k);
+			//indicate that the tree was updated
+			return true;
+		}else{
+			//indicate that not changes were performed on the tree
+			return false;
+		}
+	}else{
+		bool update=false;
+		//update children
+		int size2=size>>1;
+		 for(const Key<2>& dir: *(t->getDirections())){
+			 update=addObstacles(k+dir*size2,depth+1,size2,t) || update;
+		 }
+		//if any children created, get node
+		 if(update){
+			 Node<2>* cur=t->getNode(k);
+			 //prune and update val (single stage, no recurrence (children are up to date))
+			 cur->update(false);
+		 }
+		 //indicate if updates were performed on the tree
+		 return update;
+	}
+}
+
 bool segmentFeasibility(State<2> a,State<2> b){
 	double res=0.001;
 	State<2> inc=b-a;
@@ -148,7 +222,7 @@ bool checkFeasibility(){
 		return true;
 
 	//remove first waypoint if nescessary
-	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<0.5){	
+	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<waypoint_check_distance){	
 		if(current_path.size()>0){
 			current_path.pop_front();
 			setWaypoint(current_path.front());
@@ -187,16 +261,29 @@ void plan(){
 	std::cout << "min bound : " << minState <<std::endl;
 	std::cout << "max bound : " << maxState <<std::endl;
 	//Set Tree Max Depth
-	int depth=8;
 	t->setMaxDepth(depth);
+	//Depth First Obstacle Creation
+	std::cout << "Obstacle creation " << std::setw(10) << 0.0 << "\% done.";
+	timerStart=time(NULL);
+	addObstacles(t->getRootKey(),0,t->getRootKey()[0],t);
+	std::cout << std::endl;
+	time_t timerNow=time(NULL);	
+	int seconds = (int)difftime(timerNow,timerStart);
+	int hours = seconds/3600;
+	int minutes= (seconds/60)%60;
+	seconds=seconds%60;
+	std::cout << "Obstacles created in " 	<< std::setw(4) << hours << ":" 
+						<< std::setw(2) << minutes << ":" 
+						<< std::setw(2) << seconds 
+						<< std::endl;
 	MSP<2> algo(t);
 	//Set algo parameters
 	algo.setNewNeighboorCheck(true);
-	algo.setMapLearning(true,100,isObstacle);
+	//algo.setMapLearning(true,nb_obstacle_check,isObstacle);
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
-	algo.setEpsilon(0.1);
-	algo.setMinRGcalc(true);
+	algo.setEpsilon(epsilon);
+	//algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	std::cout << "start : " << startState <<std::endl;
 	std::cout << "goal : " << goalState <<std::endl;
@@ -204,25 +291,34 @@ void plan(){
 	//Run algo
 	if(initAlgo && algo.run()){
 		ROS_INFO_STREAM("Algo init "<<initAlgo<<", planning in progress ...");	
-		std::deque<State<2>> sol=algo.getPath();
-		std::cout << "Path length: " << sol.size() << std::endl;
+		current_path_raw=algo.getPath();
+		std::cout << "Path length: " << current_path_raw.size() << std::endl;
 		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
 		std::cout << "Path :" << std::endl;
-		for(std::deque<State<2>>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
+		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
 		}
 		std::cout << std::endl;
-		current_path=sol;
-		current_path.push_back(goalState);
+		current_path_raw.push_back(goalState);
+		current_path=std::deque<State<2>>();
+		current_path.assign(current_path_raw.begin(),current_path_raw.end());
 		//*
 		std::cout << "smoothed solution" <<std::endl;
-		smoothTraj();
+		for(int i=0;i<current_path_raw.size();++i)
+			smoothTraj();
+		//current_path=algo.getSmoothedPath();
+		//current_path.push_back(goalState);
 		std::cout << "Path length: " << current_path.size() << std::endl;
 		for(std::deque<State<2>>::iterator it=current_path.begin(),end=current_path.end();it!=end;++it){
+			std::cout << (*it) << " -- ";}
+		std::cout << std::endl << "raw:" <<std::endl;
+		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
-		}//*/
-		setWaypoint(current_path.front());
+		}
+		std::cout << std::endl;
+		//*/
 		planned=true;
+		setWaypoint(current_path.front());
 	}else{
 		ROS_INFO("Planning failed");
 		planned=false;
@@ -286,8 +382,17 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
+  //reading parameters
+  nh_rel.param("tree_depth",depth,8);
+  nh_rel.param("nb_obstacle_check",nb_obstacle_check,100);
+  nh_rel.param("epsilon",epsilon,0.1);
+  nh_rel.param("inflation_radius",inflation_radius,0.3);
+  nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.3);
+
+
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
-  traj_pub = n.advertise<visualization_msgs::Marker>("/rviz_traj", 1);
+  traj_pub_raw = n.advertise<visualization_msgs::Marker>("/traj_raw", 1);
+  traj_pub_smooth = n.advertise<visualization_msgs::Marker>("/traj_smooth", 1);
   map_pub = n.advertise<nav_msgs::OccupancyGrid>("/map_inflated", 1);
 
   ros::Subscriber goal_sub = n.subscribe("/goal_pose", 1, goalCallback);
