@@ -6,6 +6,7 @@ project(racecar)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
+   ackermann_msgs
    geometry_msgs
    message_generation
    roscpp
@@ -88,7 +89,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
 #  CATKIN_DEPENDS other_catkin_pkg 
-  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils
+  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils ackermann_msgs
 )
 
 ###########
@@ -119,6 +120,9 @@ target_link_libraries(waypoint_tracker ${catkin_LIBRARIES})
 
 add_executable(planner src/planner.cpp)
 target_link_libraries(planner ${catkin_LIBRARIES})
+
+add_executable(servo_command_to_simu src/servo_command_to_simu.cpp)
+target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

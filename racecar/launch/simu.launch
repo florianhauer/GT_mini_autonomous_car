@@ -1,0 +1,12 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+  <include file="$(find gt_car_vehicle_description)/launch/gazebo.launch" />
+
+<node pkg="racecar" type="servo_command_to_simu" name="servo_command_to_simu" output="screen">
+    <param name="frequency" value="100" />
+    <param name="alpha" value="0.5" />
+    <param name="linear_decay" value=".5" />
+    <param name="delta_max" value="0.7" />
+</node>
+</launch>
