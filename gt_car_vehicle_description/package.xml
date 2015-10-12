@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package>
+  <name>gt_car_vehicle_description</name>
+  <version>0.0.1</version>
+  <description>
+    based on ackermann_vehicle_description, with our car dimensions and sensors
+  </description>
+
+  <maintainer email="flo@gatech.edu">
+    Florian Hauer
+  </maintainer>
+  <license>Apache 2.0</license>
+
+  <url type="website">https://github.com/florianhauer/GT_mini_autonomous_car/wiki</url>
+
+  <author email="flo@gatech.edu">Florian Hauer</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>gazebo_ros_control</run_depend>
+  <run_depend>hardware_interface</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>transmission_interface</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>ackermann_vehicle_gazebo</run_depend>
+
+
+  <export>
+    <architecture_independent/>
+  </export>
+</package>
