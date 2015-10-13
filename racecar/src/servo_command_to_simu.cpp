@@ -24,7 +24,7 @@ void throttleCallback(const std_msgs::Float64::ConstPtr& msg)
 
 void steeringCallback(const std_msgs::Float64::ConstPtr& msg)
 {
-	delta=delta_max*sat(msg->data,1);
+	delta=delta_max*sat(-msg->data,1);
 }
 
 

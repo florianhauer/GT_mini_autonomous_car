@@ -134,7 +134,16 @@
 	<xacro:wall id="1" x="0" y="-2.5" wx="100" wy="0.1"/>
 	<xacro:wall id="2" x="0" y="2.5" wx="100" wy="0.1"/>
 	<xacro:wall id="3" x="15" y="1.0" wx="0.2" wy="3"/>
-	<xacro:wall id="3" x="20" y="-1.0" wx="0.2" wy="3"/>
+	<xacro:wall id="4" x="20" y="-1.0" wx="0.2" wy="3"/>
+
+	<xacro:wall id="5" x="10" y="2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="6" x="5" y="-2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="7" x="-10" y="2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="8" x="-5" y="-2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="9" x="25" y="2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="10" x="30" y="-2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="11" x="35" y="2.0" wx="0.2" wy="1"/>
+	<xacro:wall id="12" x="40" y="-2.0" wx="0.2" wy="1"/>
 	
 	    	
     <gui fullscreen='0'>

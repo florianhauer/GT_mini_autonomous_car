@@ -8,6 +8,7 @@
 
 <launch>
   <arg name="run_camera" default="true"/>
+   <arg name="waypoint_check_distance" default="0.4"/>
 
   <include file="$(find racecar)/launch/includes/joy_estop.launch.xml" />
   <include file="$(find racecar)/launch/includes/steering.launch.xml" />
@@ -38,14 +39,15 @@
     <param name="throttle_dist_gain" value="1.0" />
     <param name="throttle_speed_gain" value="1.5" />
     <param name="steering_gain" value="1.0" />
+    <param name="waypoint_check_distance" value="$(arg waypoint_check_distance)" />
   </node>
 
 <node pkg="racecar" type="planner" name="planner" output="screen">
     <param name="tree_depth" value="8" />
     <param name="nb_obstacle_check" value="1000" />
     <param name="epsilon" value="0.9999" />
-    <param name="inflation_radius" value="0.35" />
-    <param name="waypoint_check_distance" value="0.5" />
+    <param name="inflation_radius" value="0.5" />
+    <param name="waypoint_check_distance" value="$(arg waypoint_check_distance)" />
 </node>
 
 </launch>
