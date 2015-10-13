@@ -8,7 +8,7 @@
 
 <launch>
   <!-- launch script arguments -->
-  <arg name="bag"/>
+  <arg name="bag" default="/media/DATA/bags/last_run.bag"/>
 
   <!-- bag file player -->
   <param name="/use_sim_time" value="true"/>

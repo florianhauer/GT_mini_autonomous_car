@@ -10,7 +10,7 @@ geometry_msgs::PointStamped goal;
 
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
-  std::cout << "receiving goal update " << msg->point.x << "," << msg->point.y << std::endl;
+  std::cout << "receiving waypoint update " << msg->point.x << "," << msg->point.y << std::endl;
   goal.header.frame_id=msg->header.frame_id;
   goal.header.stamp=ros::Time(0);
   goal.point.x=msg->point.x;
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 10);
   steering_pub = n.advertise<std_msgs::Float64>("/steering/command", 10);
 
-  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, goalCallback);
+  ros::Subscriber goal_sub = n.subscribe("/waypoint", 10, goalCallback);
 
   tf::TransformListener listener;
 

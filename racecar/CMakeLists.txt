@@ -6,12 +6,14 @@ project(racecar)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
+   ackermann_msgs
    geometry_msgs
    message_generation
    roscpp
    interactive_markers
    visualization_msgs 
    tf
+   occupancy_grid_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -87,16 +89,18 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
 #  CATKIN_DEPENDS other_catkin_pkg 
-  DEPENDS message_runtime std_msgs geometry_msgs tf
+  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils ackermann_msgs
 )
 
 ###########
 ## Build ##
 ###########
 
+SET( CMAKE_CXX_FLAGS  "-std=c++0x" )
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(${occupancy_grid_utils_INCLUDE_DIRS})
 
 ## Declare a cpp library
 # add_library(racecar_launch
@@ -113,6 +117,12 @@ target_link_libraries(goal_marker_node ${catkin_LIBRARIES})
 
 add_executable(waypoint_tracker src/waypoint_tracker.cpp)
 target_link_libraries(waypoint_tracker ${catkin_LIBRARIES})
+
+add_executable(planner src/planner.cpp)
+target_link_libraries(planner ${catkin_LIBRARIES})
+
+add_executable(servo_command_to_simu src/servo_command_to_simu.cpp)
+target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
