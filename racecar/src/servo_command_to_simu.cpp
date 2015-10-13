@@ -40,11 +40,12 @@ int main(int argc, char **argv)
   ros::Subscriber steering_sub = n.subscribe("/steering/command", 10, steeringCallback);
 
   //getting params
-  double frequency,alpha,linear_decay;
+  double frequency,alpha,linear_decay,v_max;
   nh_rel.param("frequency",frequency,100.0);
   nh_rel.param("alpha",alpha,0.2);
   nh_rel.param("linear_decay",linear_decay,0.5);
   nh_rel.param("delta_max",delta_max,0.7);
+  nh_rel.param("v_max",v_max,3.0);
 
   ros::Rate rate(frequency);
   ackermann_msgs::AckermannDriveStamped msg;
@@ -52,13 +53,13 @@ int main(int argc, char **argv)
       if(throttle_d>0.5){
 	throttle+=alpha/frequency*(throttle_d-0.5-throttle);
       }else{
-	throttle-=linear_decay/frequency;
+	throttle-=linear_decay/frequency/v_max;
 	if(throttle<0){
 		throttle=0;
 	}
       }
       msg.drive.steering_angle=delta;
-      msg.drive.speed=6*throttle;
+      msg.drive.speed=2*v_max*throttle;
       msg.header.stamp=ros::Time::now();
       ackermann_pub.publish(msg);
       rate.sleep();

@@ -1,12 +1,58 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
-  <include file="$(find gt_car_vehicle_description)/launch/gazebo.launch" />
+   <arg name="world_name" default="$(find racecar)/worlds/maze.sdf"/>
+
+
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser_box" 
+    args="0.0 0.0 0.0 0.0 0.0 0.0 /base_link /gt_car_vehicle/laser_box 40" />
+    
+
+  <include file="$(find gt_car_vehicle_description)/launch/gazebo.launch">
+	<arg name="world_name" value="$(arg world_name)"/>
+  </include>
 
 <node pkg="racecar" type="servo_command_to_simu" name="servo_command_to_simu" output="screen">
     <param name="frequency" value="100" />
-    <param name="alpha" value="0.5" />
-    <param name="linear_decay" value=".5" />
+    <param name="alpha" value="0.3" />
+    <param name="linear_decay" value="0.5" />
     <param name="delta_max" value="0.7" />
+    <param name="v_max" value="1.0" />
 </node>
+
+<node pkg="rosbag" type="record" name="bag_recorder"
+	args="record -O /home/flo/bags/last_run.bag -a" /> 
+	
+  
+  <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen">
+    <param name="filter_alpha" value="0.95" />
+    <param name="max_min_dist" value="0.2" />
+    <param name="max_impact_time" value="0.9" />
+  </node>
+  
+  <node pkg="racecar" type="goal_marker_node" name="goal_marker_node" output="screen"/>
+  
+  <node pkg="racecar" type="waypoint_tracker" name="waypoint_tracker">
+    <param name="filter_alpha" value="0.8" />
+    <param name="frequency" value="100.0" />
+    <param name="speed_max" value="1.5" />
+    <param name="throttle_max" value="0.95" />
+    <param name="throttle_min" value="0.75" />
+    <param name="throttle_dist_gain" value="1.0" />
+    <param name="throttle_speed_gain" value="1.5" />
+    <param name="steering_gain" value="1.0" />
+  </node>
+
+<node pkg="racecar" type="planner" name="planner" output="screen">
+    <param name="tree_depth" value="8" />
+    <param name="nb_obstacle_check" value="1000" />
+    <param name="epsilon" value="0.9999" />
+    <param name="inflation_radius" value="0.35" />
+    <param name="waypoint_check_distance" value="0.5" />
+</node>
+
+<node pkg="rviz" type="rviz" name="rviz"/>
+
+  <include file="$(find racecar)/launch/mapping.launch" />
+
 </launch>
