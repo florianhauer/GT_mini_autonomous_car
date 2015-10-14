@@ -6,6 +6,7 @@ project(racecar)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
+   ackermann_msgs
    geometry_msgs
    message_generation
    roscpp
@@ -88,7 +89,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
 #  CATKIN_DEPENDS other_catkin_pkg 
-  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils
+  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils ackermann_msgs
 )
 
 ###########
@@ -120,6 +121,9 @@ target_link_libraries(waypoint_tracker ${catkin_LIBRARIES})
 add_executable(planner src/planner.cpp)
 target_link_libraries(planner ${catkin_LIBRARIES})
 
+add_executable(servo_command_to_simu src/servo_command_to_simu.cpp)
+target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(racecar_launch_node racecar_launch_generate_messages_cpp)
@@ -128,6 +132,36 @@ target_link_libraries(planner ${catkin_LIBRARIES})
 # target_link_libraries(racecar_launch_node
 #   ${catkin_LIBRARIES}
 # )
+
+# Generate .sdf files from .sdf.xacro files
+find_package(xacro REQUIRED)
+# You can also add xacro to the list of catkin packages:
+#   find_package(catkin REQUIRED COMPONENTS ... xacro)
+
+set(world_files "")
+
+# Xacro files
+file(GLOB model_xacro_files ${CMAKE_CURRENT_SOURCE_DIR}/worlds/*/*.xacro)
+
+# Dependency files
+file(GLOB world_xacro_files ${CMAKE_CURRENT_SOURCE_DIR}/worlds/*.sdf.xacro) 
+
+
+foreach(it ${world_xacro_files})
+  get_filename_component(basepath ${it} PATH)
+  get_filename_component(basename ${it} NAME_WE)
+  
+  message(" processing world file :",${basepath}," : ",${basename})
+  
+  set(expanded_file "${basepath}/${basename}.sdf")
+  message("    produce expanded file :",${expanded_file})
+  
+  xacro_add_xacro_file(${it} ${expanded_file})
+  
+  set(world_files ${world_files} ${expanded_file})
+endforeach(it)
+
+add_custom_target(media_files ALL DEPENDS ${world_files})
 
 #############
 ## Install ##

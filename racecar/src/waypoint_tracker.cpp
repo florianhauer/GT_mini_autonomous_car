@@ -8,6 +8,8 @@ ros::Publisher steering_pub;
 
 geometry_msgs::PointStamped goal;
 
+bool validated=true;
+
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
   std::cout << "receiving waypoint update " << msg->point.x << "," << msg->point.y << std::endl;
@@ -15,6 +17,7 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
   goal.header.stamp=ros::Time(0);
   goal.point.x=msg->point.x;
   goal.point.y=msg->point.y;
+  validated=false;
 }
 
 float sat(float val,float val_max){
@@ -39,7 +42,7 @@ int main(int argc, char **argv)
   tf::TransformListener listener;
 
   //getting params
-  double filter_alpha,frequency,throttle_max,throttle_min,throttle_dist_gain,throttle_speed_gain,steering_gain,speed_max;
+  double filter_alpha,frequency,throttle_max,throttle_min,throttle_dist_gain,throttle_speed_gain,steering_gain,speed_max,waypoint_check_distance;
   nh_rel.param("filter_alpha",filter_alpha,0.8);
   nh_rel.param("frequency",frequency,100.0);
   nh_rel.param("throttle_max",speed_max,2.0);
@@ -48,7 +51,7 @@ int main(int argc, char **argv)
   nh_rel.param("throttle_dist_gain",throttle_dist_gain,0.5);
   nh_rel.param("throttle_speed_gain",throttle_speed_gain,5.0);
   nh_rel.param("steering_gain",steering_gain,1.0);
-  std::cout << "throttle_max " << throttle_max << std::endl;
+  nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.5);
 
   double filtered_throttle=0;
   double filtered_steering=0;
@@ -78,7 +81,8 @@ int main(int argc, char **argv)
 		  prev_dist=filtered_dist;
 		  prev_time=goalInOdom.header.stamp;
 
-		  if(dist<0.2){
+		  if(dist<waypoint_check_distance || validated){
+			  validated=true;
 			  std_msgs::Float64 zero;
 			  zero.data=0;
 			  throttle_pub.publish(zero);

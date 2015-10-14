@@ -264,6 +264,7 @@ void plan(){
 	t->setMaxDepth(depth);
 	//Depth First Obstacle Creation
 	std::cout << "Obstacle creation " << std::setw(10) << 0.0 << "\% done.";
+	Ocount=0;
 	timerStart=time(NULL);
 	addObstacles(t->getRootKey(),0,t->getRootKey()[0],t);
 	std::cout << std::endl;
