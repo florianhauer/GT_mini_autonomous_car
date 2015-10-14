@@ -30,8 +30,8 @@
        the shock absorbers are fully extended. axle_length is the distance
        from a U joint to the corresponding hex hub. wheel_travel is the
        vertical wheel travel. -->
-  <xacro:property name="wheelbase" value="0.335"/>
-  <xacro:property name="hex_hub_dist" value="0.265"/>
+  <xacro:property name="wheelbase" value="0.325"/>
+  <xacro:property name="hex_hub_dist" value="0.285"/>
   <xacro:property name="axle_length" value="0.00"/>
   <xacro:property name="wheel_travel" value="0.04"/>
   <xacro:property name="shock_z_offset" value="0.03"/>
@@ -322,7 +322,7 @@
   </gazebo>
 
   <joint name="chassis_to_layer_1" type="fixed">
-    <origin xyz="0 0 0.05" rpy="0 0 0" />
+    <origin xyz="0 0 0.075" rpy="0 0 0" />
     <parent link="chassis"/>
     <child link="layer_1"/>
   </joint>
@@ -355,7 +355,7 @@
   </gazebo>
 
   <joint name="chassis_to_layer_2" type="fixed">
-    <origin xyz="0 0 0.1" rpy="0 0 0" />
+    <origin xyz="0 0 0.115" rpy="0 0 0" />
     <parent link="chassis"/>
     <child link="layer_2"/>
   </joint>
