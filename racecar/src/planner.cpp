@@ -323,6 +323,8 @@ void plan(){
 		ROS_INFO("Planning failed");
 		planned=false;
 	}
+	algo.clear();
+	free(t);
 	planning=false;
 }
 
@@ -395,9 +397,9 @@ int main(int argc, char **argv)
   traj_pub_smooth = n.advertise<visualization_msgs::Marker>("/traj_smooth", 1);
   map_pub = n.advertise<nav_msgs::OccupancyGrid>("/map_inflated", 1);
 
-  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 1, goalCallback);
-  ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 1, poseCallback);
-  ros::Subscriber map_sub = n.subscribe("/map", 1, mapCallback);
+  ros::Subscriber goal_sub = n.subscribe("/goal_pose", 10, goalCallback);
+  ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 10, poseCallback);
+  ros::Subscriber map_sub = n.subscribe("/map", 10, mapCallback);
 
 
 
