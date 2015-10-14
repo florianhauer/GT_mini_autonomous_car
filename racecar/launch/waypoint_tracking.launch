@@ -7,7 +7,7 @@
 -->
 
 <launch>
-  <arg name="run_camera" default="true"/>
+  <arg name="run_camera" default="false"/>
    <arg name="waypoint_check_distance" default="0.4"/>
 
   <include file="$(find racecar)/launch/includes/joy_estop.launch.xml" />

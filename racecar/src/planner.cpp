@@ -284,6 +284,7 @@ void plan(){
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
 	algo.setEpsilon(epsilon);
+	algo.setLambda1(0.1);
 	//algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	std::cout << "start : " << startState <<std::endl;
