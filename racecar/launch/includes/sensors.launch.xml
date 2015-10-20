@@ -28,7 +28,7 @@
       <param name="frame_id" value="camera" />
     </node>
   </group> -->
-  <include file="$(find pointgrey_camera_driver)/launch/camera.launch" />
+  <include file="$(find pointgrey_camera_driver)/launch/camera.launch" if="$(arg run_camera)"/>
 
   <!-- optical flow -->
 <!--  <node pkg="px4flow" type="px4flow_node" name="optical_flow_node">

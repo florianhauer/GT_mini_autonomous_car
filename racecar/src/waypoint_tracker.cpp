@@ -8,6 +8,8 @@ ros::Publisher steering_pub;
 
 geometry_msgs::PointStamped goal;
 
+bool validated=true;
+
 void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
   std::cout << "receiving waypoint update " << msg->point.x << "," << msg->point.y << std::endl;
@@ -15,6 +17,7 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
   goal.header.stamp=ros::Time(0);
   goal.point.x=msg->point.x;
   goal.point.y=msg->point.y;
+  validated=false;
 }
 
 float sat(float val,float val_max){
@@ -78,7 +81,8 @@ int main(int argc, char **argv)
 		  prev_dist=filtered_dist;
 		  prev_time=goalInOdom.header.stamp;
 
-		  if(dist<waypoint_check_distance){
+		  if(dist<waypoint_check_distance || validated){
+			  validated=true;
 			  std_msgs::Float64 zero;
 			  zero.data=0;
 			  throttle_pub.publish(zero);
