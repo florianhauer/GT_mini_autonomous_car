@@ -30,6 +30,7 @@ double waypoint_check_distance=0.3;
 int depth=8;
 int nb_obstacle_check=100;
 double epsilon=0.1;
+double unknownSpaceProbability=0.5;
 
 nav_msgs::OccupancyGrid::Ptr local_map;
 
@@ -138,6 +139,25 @@ bool isObstacle(State<2> state){
 	
 }
 
+double obstacleProbability(State<2> state){
+	geometry_msgs::Point point;
+	point.x=state[0];
+	point.y=state[1];
+	try{
+		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
+		int val=local_map->data[index];
+		if(val == -1){
+			//unknown space
+			return unknownSpaceProbability;
+		}else{
+			return val;
+		}
+	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
+		return 1.0;
+	}
+	
+}
+
 int Ocount=0;
 time_t timerStart;
 
@@ -161,6 +181,8 @@ bool addObstacles(Key<2> k, int depth, int size, Tree<2>* t){
 		if(isObstacle(t->getState(k))){
 			//add obstacle to the tree
 			t->addObstacle(k);
+			Node<2>* n=t->getNode(k);
+			n->setValue(obstacleProbability(t->getState(k)));
 			//indicate that the tree was updated
 			return true;
 		}else{
@@ -246,6 +268,7 @@ void plan(){
 	ROS_INFO("planning");
 	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
 		return;
+	planned=false;
 	planning=true;
 	stop();
 	//TODO
@@ -304,6 +327,7 @@ void plan(){
 		current_path_raw.push_back(goalState);
 		current_path=std::deque<State<2>>();
 		current_path.assign(current_path_raw.begin(),current_path_raw.end());
+		planned=true;
 		//*
 		std::cout << "smoothed solution" <<std::endl;
 		for(int i=0;i<current_path_raw.size();++i)
@@ -319,7 +343,6 @@ void plan(){
 		}
 		std::cout << std::endl;
 		//*/
-		planned=true;
 		setWaypoint(current_path.front());
 	}else{
 		ROS_INFO("Planning failed");
@@ -344,6 +367,7 @@ void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	startState[1]=pose.point.y;
 
 	if(!checkFeasibility()){
+		planned=false;
 		plan();
 	}
 	sendWaypoint();
@@ -358,6 +382,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 	local_map=occupancy_grid_utils::inflateObstacles(*msg,inflation_radius,true);
 	map_pub.publish(local_map);
 	if(!checkFeasibility()){
+		planned=false;
 		plan();
 	}
 	sendWaypoint();
@@ -375,7 +400,8 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
 
 	goalState[0]=goal.point.x;
 	goalState[1]=goal.point.y;
-
+	
+	planned=false;
 	plan();
 	sendWaypoint();
 }
@@ -392,6 +418,7 @@ int main(int argc, char **argv)
   nh_rel.param("epsilon",epsilon,0.1);
   nh_rel.param("inflation_radius",inflation_radius,0.3);
   nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.3);
+  nh_rel.param("unknown_space_probability",unknownSpaceProbability,0.5);
 
 
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
