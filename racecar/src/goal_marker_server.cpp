@@ -35,6 +35,8 @@ int main(int argc, char** argv)
   int_marker.header.frame_id = "map";
   int_marker.name = "goal";
   int_marker.description = "Goal";
+  //put the marker higher up to prevent overlapping objects which create interaction issues 
+  int_marker.pose.position.z=0.5;
 
   // create a grey box marker
   visualization_msgs::Marker box_marker;
@@ -46,8 +48,6 @@ int main(int argc, char** argv)
   box_marker.color.g = 0.5;
   box_marker.color.b = 0.5;
   box_marker.color.a = 1.0;
-
-  box_marker.pose.position.z=0.5;
 
   // create a non-interactive control which contains the box
   visualization_msgs::InteractiveMarkerControl box_control;

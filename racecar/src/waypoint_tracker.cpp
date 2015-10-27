@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   tf::TransformListener listener;
 
   //getting params
-  double filter_alpha,frequency,throttle_max,throttle_min,throttle_dist_gain,throttle_speed_gain,steering_gain,speed_max,waypoint_check_distance,uturn_theta_threshold,uturn_throttle;
+  double filter_alpha,frequency,throttle_max,throttle_min,throttle_dist_gain,throttle_speed_gain, steering_gain,speed_max,waypoint_check_distance,uturn_theta_threshold,uturn_throttle, uturn_theta_threshold_hysteresis, uturn_radius_hysteresis;
   nh_rel.param("filter_alpha",filter_alpha,0.8);
   nh_rel.param("frequency",frequency,100.0);
   nh_rel.param("throttle_max",speed_max,2.0);
@@ -78,6 +78,8 @@ int main(int argc, char **argv)
   nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.5);
   nh_rel.param("uturn_theta_threshold",uturn_theta_threshold,1.0);
   nh_rel.param("uturn_throttle",uturn_throttle,0.8);
+  nh_rel.param("uturn_theta_threshold_hysteresis",uturn_theta_threshold_hysteresis,0.15);
+  nh_rel.param("uturn_radius_hysteresis",uturn_radius_hysteresis,0.05);
 
   double filtered_throttle=0;
   double filtered_steering=0;
@@ -107,7 +109,7 @@ int main(int argc, char **argv)
 		  prev_dist=filtered_dist;
 		  prev_time=goalInOdom.header.stamp;
 
-		  if(fabs(theta)>uturn_theta_threshold){
+		  if(fabs(theta)>uturn_theta_threshold+uturn_theta_threshold_hysteresis){
 			if(mode==NORMAL){
 				//initialize uturn variables
 				//center = current position
@@ -153,7 +155,9 @@ int main(int argc, char **argv)
 			}
 			mode=UTURN;
 		  }else{
-			mode=NORMAL;
+			if(fabs(theta)<uturn_theta_threshold-uturn_theta_threshold_hysteresis){
+				mode=NORMAL;
+			}
 		  }
 		
 		  if(dist<waypoint_check_distance || validated){
@@ -167,14 +171,16 @@ int main(int argc, char **argv)
 			  switch(mode){
 				case UTURN:
 					listener.transformPoint("base_link",uturn_center,goalInOdom);
-					if(goalInOdom.point.x*goalInOdom.point.x+goalInOdom.point.y*goalInOdom.point.y>uturn_radius*uturn_radius){
-						if(canSwitch==true){
+					if(goalInOdom.point.x*goalInOdom.point.x+goalInOdom.point.y*goalInOdom.point.y>(uturn_radius+uturn_radius_hysteresis)*(uturn_radius+uturn_radius_hysteresis)){
+						if(canSwitch){
 							current_turn*=-1;
 							current_speed*=-1;
 							canSwitch=false;
 						}			
 					}else{
-						canSwitch=true;
+						if(goalInOdom.point.x*goalInOdom.point.x+goalInOdom.point.y*goalInOdom.point.y<(uturn_radius-uturn_radius_hysteresis)*(uturn_radius-uturn_radius_hysteresis)){
+							canSwitch=true;
+						}
 					}
 					throttle.data=uturn_throttle*current_speed;
 					steering.data=current_turn;
