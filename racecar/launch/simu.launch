@@ -50,7 +50,8 @@
 <node pkg="racecar" type="planner" name="planner" output="screen">
     <param name="tree_depth" value="8" />
     <param name="nb_obstacle_check" value="1000" />
-    <param name="epsilon" value="0.9999" />
+    <param name="epsilon" value="0.5" />
+    <param name="unknown_space_probability" value="0.8" />
     <param name="inflation_radius" value="0.35" />
     <param name="waypoint_check_distance" value="$(arg waypoint_check_distance)" />
 </node>
