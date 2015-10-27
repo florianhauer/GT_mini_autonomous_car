@@ -9,6 +9,8 @@
 
 #include <msp/MSP.h>
 
+const int8_t UNKNOWN=255;
+
 ros::Publisher waypoint_pub;
 ros::Publisher traj_pub_raw;
 ros::Publisher traj_pub_smooth;
@@ -127,14 +129,18 @@ bool isObstacle(State<2> state){
 	point.y=state[1];
 	try{
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
-		int val=local_map->data[index];
+		int8_t val=local_map->data[index];
 		//TODO (maybe use probabilities
 		//std::cout << val << std::endl;
-		if(val>100*(1-epsilon)){
-			return true;
+		if(val==UNKNOWN){
+			return unknownSpaceProbability>(1-epsilon);
 		}else{
-			return false;
-		}
+			if(val>100*(1-epsilon)){
+				return true;
+			}else{
+				return false;
+			}
+		}	
 	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
 		return true;
 	}
@@ -149,8 +155,8 @@ double obstacleProbability(State<2> state){
 	point.y=state[1];
 	try{
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
-		int val=local_map->data[index];
-		if(val == -1){
+		int8_t val=local_map->data[index];
+		if(val == UNKNOWN){
 			//unknown space
 			return unknownSpaceProbability;
 		}else{
