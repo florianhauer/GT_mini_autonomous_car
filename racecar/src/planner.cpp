@@ -160,7 +160,7 @@ double obstacleProbability(State<2> state){
 			//unknown space
 			return unknownSpaceProbability;
 		}else{
-			return val;
+			return 0.01*val;
 		}
 	}catch(occupancy_grid_utils::CellOutOfBoundsException e){
 		return 1.0;
