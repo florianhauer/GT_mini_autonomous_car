@@ -43,6 +43,7 @@
     <param name="throttle_dist_gain" value="1.0" />
     <param name="throttle_speed_gain" value="1.5" />
     <param name="steering_gain" value="1.0" />
+    <param name="uturn_throttle" value="0.9" />
     <param name="waypoint_check_distance" value="$(arg waypoint_check_distance)" />
   </node>
 

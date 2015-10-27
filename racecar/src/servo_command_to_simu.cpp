@@ -34,10 +34,10 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
-  ackermann_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>("/gt_car_vehicle/ackermann_cmd", 10);
+  ackermann_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>("/gt_car_vehicle/ackermann_cmd", 1);
 
-  ros::Subscriber throttle_sub = n.subscribe("/throttle/command", 10, throttleCallback);
-  ros::Subscriber steering_sub = n.subscribe("/steering/command", 10, steeringCallback);
+  ros::Subscriber throttle_sub = n.subscribe("/throttle/command", 1, throttleCallback);
+  ros::Subscriber steering_sub = n.subscribe("/steering/command", 1, steeringCallback);
 
   //getting params
   double frequency,alpha,linear_decay,v_max;

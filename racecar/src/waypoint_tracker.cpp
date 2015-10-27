@@ -56,12 +56,12 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
-  throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 10);
-  steering_pub = n.advertise<std_msgs::Float64>("/steering/command", 10);
+  throttle_pub = n.advertise<std_msgs::Float64>("/throttle/command", 1);
+  steering_pub = n.advertise<std_msgs::Float64>("/steering/command", 1);
   marker_pub = n.advertise<visualization_msgs::Marker>("uturn_marker", 1);
 
   ros::Subscriber goal_sub = n.subscribe("/waypoint", 10, goalCallback);
-  ros::Subscriber closestObstacle_sub = n.subscribe("/closest_obstacle", 10, closestObstacleCallback);
+  ros::Subscriber closestObstacle_sub = n.subscribe("/closest_obstacle", 1, closestObstacleCallback);
 
   tf::TransformListener listener;
 
