@@ -130,7 +130,7 @@ bool isObstacle(State<2> state){
 		int val=local_map->data[index];
 		//TODO (maybe use probabilities
 		//std::cout << val << std::endl;
-		if(val!=0){
+		if(val>100*(1-epsilon)){
 			return true;
 		}else{
 			return false;
@@ -180,11 +180,12 @@ bool addObstacles(Key<2> k, int depth, int size, Tree<2>* t){
 		}
 		//finest resolution: update obstacle presence
 		//if obstacles
-		if(isObstacle(t->getState(k))){
+		double p=obstacleProbability(t->getState(k));
+		if(p!=0.0){
 			//add obstacle to the tree
 			t->addObstacle(k);
 			Node<2>* n=t->getNode(k);
-			n->setValue(obstacleProbability(t->getState(k)));
+			n->setValue(p);
 			//indicate that the tree was updated
 			return true;
 		}else{
