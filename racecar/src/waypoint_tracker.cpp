@@ -34,6 +34,7 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
 	  goal.point.x=msg->point.x;
 	  goal.point.y=msg->point.y;
 	  validated=false;
+	  mode=NORMAL;
   }
 }
 
