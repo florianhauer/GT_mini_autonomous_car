@@ -120,6 +120,8 @@ void stop(){
 }
 
 bool isObstacle(State<2> state){
+	if((state-startState).norm()<inflation_radius)
+		return false;
 	geometry_msgs::Point point;
 	point.x=state[0];
 	point.y=state[1];
@@ -128,7 +130,7 @@ bool isObstacle(State<2> state){
 		int val=local_map->data[index];
 		//TODO (maybe use probabilities
 		//std::cout << val << std::endl;
-		if(val>50){
+		if(val!=0){
 			return true;
 		}else{
 			return false;
