@@ -49,12 +49,15 @@ int main(int argc, char **argv)
 
   ros::Rate rate(frequency);
   ackermann_msgs::AckermannDriveStamped msg;
+
+  bool positive_velocity=true;
   while (n.ok()){
-      if(throttle_d>0.5){
-	throttle+=alpha/frequency*(throttle_d-0.5-throttle);
+      if(fabs(throttle_d)>0.5 || fabs(throttle)<0.05 ){
+	throttle+=alpha/frequency*(throttle_d-(throttle_d==0?0:(throttle_d>0?1:-1))*0.5-throttle);
       }else{
-	throttle-=linear_decay/frequency/v_max;
-	if(throttle<0){
+	int sign=(throttle>0?1:-1);
+	throttle-=sign*linear_decay/frequency/v_max;
+	if(sign*throttle<0){
 		throttle=0;
 	}
       }

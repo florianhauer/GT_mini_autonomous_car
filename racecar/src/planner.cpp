@@ -223,7 +223,7 @@ bool checkFeasibility(){
 
 	//remove first waypoint if nescessary
 	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<waypoint_check_distance){	
-		if(current_path.size()>0){
+		if(current_path.size()>1){
 			current_path.pop_front();
 			setWaypoint(current_path.front());
 		}else{

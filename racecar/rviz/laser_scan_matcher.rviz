@@ -183,7 +183,7 @@ Visualization Manager:
       Marker Topic: /traj_raw
       Name: Raw Traj
       Namespaces:
-        {}
+        traj_raw: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -191,7 +191,7 @@ Visualization Manager:
       Marker Topic: /traj_smooth
       Name: Smooth Traj
       Namespaces:
-        {}
+        traj: true
       Queue Size: 100
       Value: true
     - Alpha: 0.7
@@ -201,6 +201,14 @@ Visualization Manager:
       Enabled: true
       Name: Inflated Map
       Topic: /map_inflated
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /uturn_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -226,22 +234,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.5091
+      Distance: 6.64971
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.052057
+        Y: -1.68096
+        Z: 2.25724
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.595398
+      Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 1.1104
+      Yaw: 0.000405312
     Saved: ~
 Window Geometry:
   Displays:

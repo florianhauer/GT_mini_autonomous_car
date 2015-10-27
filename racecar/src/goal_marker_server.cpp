@@ -47,6 +47,8 @@ int main(int argc, char** argv)
   box_marker.color.b = 0.5;
   box_marker.color.a = 1.0;
 
+  box_marker.pose.position.z=0.5;
+
   // create a non-interactive control which contains the box
   visualization_msgs::InteractiveMarkerControl box_control;
   box_control.always_visible = true;
@@ -60,6 +62,7 @@ int main(int argc, char** argv)
   // which will cause RViz to insert two arrows
   visualization_msgs::InteractiveMarkerControl rotate_control;
   rotate_control.name = "move_xy";
+  //rotate_control.pose.position.z=0.5;
   rotate_control.orientation.w = 1;
   rotate_control.orientation.x = 0;
   rotate_control.orientation.y = 1;

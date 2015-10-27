@@ -1,10 +1,12 @@
 #include "ros/ros.h"
 #include "racecar/EmergencyStop.h"
 #include "sensor_msgs/LaserScan.h"
+#include "std_msgs/Float64.h"
 #include <algorithm>
 
 
 ros::Publisher estop_pub;
+ros::Publisher dist_pub;
 double prev_range=1;
 ros::Time prev_time;
 double filtered_dist=1.0;
@@ -52,6 +54,9 @@ void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	}
 	prev_range=min_dist;
 	prev_time=msg->header.stamp;
+	std_msgs::Float64 dist_msg;
+	dist_msg.data=filtered_dist;
+	dist_pub.publish(dist_msg);
 }
 
 int main(int argc, char **argv)
@@ -63,6 +68,7 @@ int main(int argc, char **argv)
   nh_rel.param("max_min_dist",max_min_dist,0.4);
   nh_rel.param("max_impact_time",max_impact_time,1.5);
   estop_pub = n.advertise<racecar::EmergencyStop>("/emergencyStop", 10);
+  dist_pub = n.advertise<std_msgs::Float64>("/closest_obstacle", 10);
   prev_time=ros::Time::now();
   ros::Subscriber sub = n.subscribe("/scan", 1, scanCallback);
   ros::spin();
