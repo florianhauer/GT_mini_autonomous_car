@@ -142,6 +142,8 @@ bool isObstacle(State<2> state){
 }
 
 double obstacleProbability(State<2> state){
+	if((state-startState).norm()<inflation_radius)
+		return 0.0;
 	geometry_msgs::Point point;
 	point.x=state[0];
 	point.y=state[1];
