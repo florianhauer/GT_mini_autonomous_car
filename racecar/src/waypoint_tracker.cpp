@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 					uturn_center.header.stamp=ros::Time(0);
 					//max distance from uturn = 0.5* closest obstacle
 					uturn_radius=0.5*closest_obstacle;
-					current_turn=theta>0?1:-1;
+					current_turn=theta>0?-1:1;
 					current_speed=1;
 					canSwitch=true;
 					std::cout << "Initiating uturn" << std::endl;

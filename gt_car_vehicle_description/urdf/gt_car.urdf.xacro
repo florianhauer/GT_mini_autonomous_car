@@ -24,7 +24,7 @@
   <xacro:property name="tire_dia" value="0.1"/>
   <xacro:property name="tire_width" value="0.05"/>
   <xacro:property name="hex_hub_depth" value="0.025"/>
-  <xacro:property name="wheel_mass" value="0.2"/>
+  <xacro:property name="wheel_mass" value="0.5"/>
 
   <!-- hex_hub_dist is the distance between left and right hex hubs when
        the shock absorbers are fully extended. axle_length is the distance
@@ -191,6 +191,16 @@
         <geometry>
           <cylinder radius="${tire_dia / 2}" length="${tire_width}"/>
         </geometry>
+	<surface>
+          <friction>
+            <ode>
+              <mu>10.0</mu>
+              <mu2>10.0</mu2>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+        </surface>
       </collision>
 
       <xacro:thick_walled_tube_inertial

@@ -122,7 +122,7 @@ void stop(){
 }
 
 bool isObstacle(State<2> state){
-	if((state-startState).norm()<inflation_radius)
+	if((state-startState).norm()<0.5*inflation_radius)
 		return false;
 	geometry_msgs::Point point;
 	point.x=state[0];
@@ -148,7 +148,7 @@ bool isObstacle(State<2> state){
 }
 
 double obstacleProbability(State<2> state){
-	if((state-startState).norm()<inflation_radius)
+	if((state-startState).norm()<0.5*inflation_radius)
 		return 0.0;
 	geometry_msgs::Point point;
 	point.x=state[0];
@@ -277,8 +277,8 @@ bool checkFeasibility(){
 
 void plan(){
 	ROS_INFO("planning");
-	if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
-		return;
+	//if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
+	//	return;
 	planned=false;
 	planning=true;
 	stop();
@@ -318,7 +318,7 @@ void plan(){
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
 	algo.setEpsilon(epsilon);
-	algo.setLambda1(0.1);
+	algo.setLambda1(0.01);
 	//algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	std::cout << "start : " << startState <<std::endl;

@@ -52,7 +52,34 @@ int main(int argc, char **argv)
 
   bool positive_velocity=true;
   while (n.ok()){
-      if(fabs(throttle_d)>0.5 || fabs(throttle)<0.05 ){
+      if(positive_velocity && throttle_d>0.5){
+	 throttle+=alpha/frequency*(throttle_d-0.5-throttle);
+      }else{
+	if(!positive_velocity && throttle_d<-0.5){
+		throttle+=alpha/frequency*(throttle_d+0.5-throttle);
+	}else{
+		if(fabs(throttle)>0.05){
+			int sign=(throttle>0?1:-1);
+			throttle-=sign*linear_decay/frequency/v_max;
+			if(sign*throttle<0){
+				throttle=0;
+			}
+		}else{
+			if(throttle_d>0.5){
+				positive_velocity=true;
+				throttle+=alpha/frequency*(throttle_d-0.5-throttle);
+			}else{
+				if(throttle_d<-0.5){
+					positive_velocity=false;
+					throttle+=alpha/frequency*(throttle_d+0.5-throttle);
+				}else{
+					throttle=0;
+				}
+			}
+		}
+	}
+      }
+      /*if(fabs(throttle_d)>0.5 || fabs(throttle)<0.05 ){
 	throttle+=alpha/frequency*(throttle_d-(throttle_d==0?0:(throttle_d>0?1:-1))*0.5-throttle);
       }else{
 	int sign=(throttle>0?1:-1);
@@ -60,7 +87,7 @@ int main(int argc, char **argv)
 	if(sign*throttle<0){
 		throttle=0;
 	}
-      }
+      }*/
       msg.drive.steering_angle=delta;
       msg.drive.speed=2*v_max*throttle;
       msg.header.stamp=ros::Time::now();
