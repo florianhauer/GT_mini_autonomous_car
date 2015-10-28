@@ -93,6 +93,8 @@ int main(int argc, char **argv)
   goal.header.frame_id="map";
 
   ros::Rate rate(frequency);
+  std_msgs::Float64 zero;
+  zero.data=0;
 
   while (n.ok()){
       try{
@@ -110,64 +112,68 @@ int main(int argc, char **argv)
 		  prev_dist=filtered_dist;
 		  prev_time=goalInOdom.header.stamp;
 
-		  if(fabs(theta)>uturn_theta_threshold+uturn_theta_threshold_hysteresis){
-			if(mode==NORMAL){
-				//initialize uturn variables
-				//center = current position
-				geometry_msgs::PointStamped zero;
-				zero.point.x=0;
-				zero.point.y=0;
-				zero.point.z=0;
-				zero.header.stamp=ros::Time(0);
-				zero.header.frame_id="base_link";
-		  		listener.transformPoint("map",zero,uturn_center);
-				uturn_center.header.stamp=ros::Time(0);
-				//max distance from uturn = 0.5* closest obstacle
-				uturn_radius=0.5*closest_obstacle;
-				current_turn=theta>0?-1:1;
-				current_speed=1;
-				canSwitch=false;
-				std::cout << "Initiating uturn" << std::endl;
-				std::cout << "centered at " << uturn_center.point.x << " , " << uturn_center.point.y << std::endl;
-				std::cout << "uturn radius : " << uturn_radius << std::endl;
-				visualization_msgs::Marker marker;
-				marker.header.frame_id = "map";
-				marker.header.stamp = ros::Time::now();
-				marker.ns = "uturn";
-				marker.id = 0;
-				marker.type = visualization_msgs::Marker::CYLINDER;
-				marker.action = visualization_msgs::Marker::ADD;
-				marker.pose.position.x = uturn_center.point.x;
-				marker.pose.position.y = uturn_center.point.y;
-				marker.pose.position.z = 0;
-				marker.pose.orientation.x = 0.0;
-				marker.pose.orientation.y = 0.0;
-				marker.pose.orientation.z = 0.0;
-				marker.pose.orientation.w = 1.0;
-				marker.scale.x = 2*uturn_radius;
-				marker.scale.y = 2*uturn_radius;
-				marker.scale.z = 0.1;
-				marker.color.r = 0.0f;
-				marker.color.g = 0.0f;
-				marker.color.b = 1.0f;
-				marker.color.a = 0.3;
-				marker.lifetime = ros::Duration();
-				marker_pub.publish(marker);
-			}
-			mode=UTURN;
-		  }else{
-			if(fabs(theta)<uturn_theta_threshold-uturn_theta_threshold_hysteresis){
-				mode=NORMAL;
-			}
-		  }
-		
+		  
 		  if(dist<waypoint_check_distance || validated){
 			  validated=true;
-			  std_msgs::Float64 zero;
-			  zero.data=0;
 			  throttle_pub.publish(zero);
 			  steering_pub.publish(zero);
 		  }else{
+			  if(fabs(theta)>uturn_theta_threshold+uturn_theta_threshold_hysteresis){
+				if(mode==NORMAL){
+					//wait for a second for the car to slow down/stop
+					throttle_pub.publish(zero);
+					steering_pub.publish(zero);
+					ros::Duration dur(1.0);
+					dur.sleep();
+					//initialize uturn variables
+					//center = current position
+					geometry_msgs::PointStamped zero;
+					zero.point.x=0;
+					zero.point.y=0;
+					zero.point.z=0;
+					zero.header.stamp=ros::Time(0);
+					zero.header.frame_id="base_link";
+			  		listener.transformPoint("map",zero,uturn_center);
+					uturn_center.header.stamp=ros::Time(0);
+					//max distance from uturn = 0.5* closest obstacle
+					uturn_radius=0.5*closest_obstacle;
+					current_turn=theta>0?1:-1;
+					current_speed=1;
+					canSwitch=true;
+					std::cout << "Initiating uturn" << std::endl;
+					std::cout << "centered at " << uturn_center.point.x << " , " << uturn_center.point.y << std::endl;
+					std::cout << "uturn radius : " << uturn_radius << std::endl;
+					visualization_msgs::Marker marker;
+					marker.header.frame_id = "map";
+					marker.header.stamp = ros::Time::now();
+					marker.ns = "uturn";
+					marker.id = 0;
+					marker.type = visualization_msgs::Marker::CYLINDER;
+					marker.action = visualization_msgs::Marker::ADD;
+					marker.pose.position.x = uturn_center.point.x;
+					marker.pose.position.y = uturn_center.point.y;
+					marker.pose.position.z = 0;
+					marker.pose.orientation.x = 0.0;
+					marker.pose.orientation.y = 0.0;
+					marker.pose.orientation.z = 0.0;
+					marker.pose.orientation.w = 1.0;
+					marker.scale.x = 2*uturn_radius;
+					marker.scale.y = 2*uturn_radius;
+					marker.scale.z = 0.1;
+					marker.color.r = 0.0f;
+					marker.color.g = 0.0f;
+					marker.color.b = 1.0f;
+					marker.color.a = 0.3;
+					marker.lifetime = ros::Duration();
+					marker_pub.publish(marker);
+				}
+				mode=UTURN;
+			  }else{
+				if(fabs(theta)<uturn_theta_threshold-uturn_theta_threshold_hysteresis){
+					mode=NORMAL;
+				}
+			  }
+		
 			  std_msgs::Float64 throttle,steering;
 			  switch(mode){
 				case UTURN:
