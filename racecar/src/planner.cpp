@@ -279,9 +279,9 @@ void plan(){
 	ROS_INFO("planning");
 	//if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
 	//	return;
+	stop();
 	planned=false;
 	planning=true;
-	stop();
 	//TODO
 	Tree<2>* t=new Tree<2>();
 	//Set Search Space Bounds
@@ -378,7 +378,6 @@ void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	startState[1]=pose.point.y;
 
 	if(!checkFeasibility()){
-		planned=false;
 		plan();
 	}
 	sendWaypoint();
@@ -393,7 +392,6 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 	local_map=occupancy_grid_utils::inflateObstacles(*msg,inflation_radius,true);
 	map_pub.publish(local_map);
 	if(!checkFeasibility()){
-		planned=false;
 		plan();
 	}
 	sendWaypoint();
@@ -412,7 +410,6 @@ void goalCallback(const geometry_msgs::PointStamped::ConstPtr& msg){
 	goalState[0]=goal.point.x;
 	goalState[1]=goal.point.y;
 	
-	planned=false;
 	plan();
 	sendWaypoint();
 }
