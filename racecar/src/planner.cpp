@@ -6,6 +6,11 @@
 #include <occupancy_grid_utils/coordinate_conversions.h>
 #include <occupancy_grid_utils/shortest_path.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <ompl/base/SpaceInformation.h>
+#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
+#include <ompl/base/objectives/StateCostIntegralObjective.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/geometric/planners/rrt/RRTstar.h>
 
 #include <msp/MSP.h>
 
@@ -275,6 +280,89 @@ bool checkFeasibility(){
 		return false;
 	}
 	return true;
+}
+
+namespace ob = ompl::base;
+namespace og = ompl::geometric;
+
+class ClearanceObjective : public ob::StateCostIntegralObjective
+{
+public:
+    ClearanceObjective(const ob::SpaceInformationPtr& si) :
+        ob::StateCostIntegralObjective(si, true)
+    {
+    }
+    ob::Cost stateCost(const ob::State* s) const
+    {
+	State<2> s2;
+	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
+	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
+        return ob::Cost(1.0+obstacleProbability(s2));
+    }
+};
+class ValidityChecker : public ob::StateValidityChecker
+{
+public:
+    ValidityChecker(const ob::SpaceInformationPtr& si) :
+        ob::StateValidityChecker(si) {}
+
+    // Returns whether the given state's position overlaps the
+    // circular obstacle
+    bool isValid(const ob::State* s) const
+    {
+	State<2> s2;
+	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
+	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
+        return isObstacle(s2);
+    }
+};
+
+void RRTstar_planning(){	
+    ob::StateSpacePtr space(new ob::RealVectorStateSpace(2));
+    space->as<ob::RealVectorStateSpace>()->setBounds(minX(local_map->info), maxX(local_map->info));
+    ob::SpaceInformationPtr si(new ob::SpaceInformation(space));
+    si->setStateValidityChecker(ob::StateValidityCheckerPtr(new ValidityChecker(si)));
+    si->setup();
+    ob::ScopedState<> start(space);
+    start->as<ob::RealVectorStateSpace::StateType>()->values[0] = startState[0];
+    start->as<ob::RealVectorStateSpace::StateType>()->values[1] = startState[1];
+    ob::ScopedState<> goal(space);
+    goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = goalState[0];
+    goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = goalState[1];
+    ob::ProblemDefinitionPtr pdef(new ob::ProblemDefinition(si));
+    pdef->setStartAndGoalStates(start, goal);
+    pdef->setOptimizationObjective(ob::OptimizationObjectivePtr(new ClearanceObjective(si)));
+    ob::PlannerPtr optimizingPlanner(new og::RRTstar(si));
+    optimizingPlanner->setProblemDefinition(pdef);
+    optimizingPlanner->setup();
+    ob::PlannerStatus solved;
+    int it=0;
+    while(!solved && it<10){
+	it++;
+	solved = optimizingPlanner->solve(1.0);
+    }
+    if(solved){
+	std::vector< ob::State * > sol = boost::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
+	current_path_raw.resize(sol.size());
+	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), 
+   		[](ob::State* s) -> State<2> { 
+		State<2> s2;
+		s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
+		s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
+		return s2; });
+	std::cout << "Path length: " << pdef->getSolutionPath()->length() << std::endl;
+	std::cout << "Path cost: " << pdef->getSolutionPath()->cost(pdef->getOptimizationObjective()) << std::endl;
+	std::cout << "Path :" << std::endl;
+	for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
+		std::cout << (*it) << " -- ";
+	}
+	std::cout << std::endl;
+	planned=true;
+
+    }else{
+	ROS_INFO("Planning failed");
+	planned=false;
+    }
 }
 
 void MSPP_planning(){

@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(OMPL)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -100,7 +100,7 @@ SET( CMAKE_CXX_FLAGS  "-std=c++0x" )
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(${occupancy_grid_utils_INCLUDE_DIRS})
+include_directories(${occupancy_grid_utils_INCLUDE_DIRS} , ${OMPL_INCLUDE_DIRS})
 
 ## Declare a cpp library
 # add_library(racecar_launch
@@ -119,7 +119,7 @@ add_executable(waypoint_tracker src/waypoint_tracker.cpp)
 target_link_libraries(waypoint_tracker ${catkin_LIBRARIES})
 
 add_executable(planner src/planner.cpp)
-target_link_libraries(planner ${catkin_LIBRARIES})
+target_link_libraries(planner ${catkin_LIBRARIES}  ${OMPL_LIBRARIES})
 
 add_executable(servo_command_to_simu src/servo_command_to_simu.cpp)
 target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
@@ -151,10 +151,10 @@ foreach(it ${world_xacro_files})
   get_filename_component(basepath ${it} PATH)
   get_filename_component(basename ${it} NAME_WE)
   
-  message(" processing world file :",${basepath}," : ",${basename})
+  message(" processing world file :",${basepath}," : " , ${basename})
   
   set(expanded_file "${basepath}/${basename}.sdf")
-  message("    produce expanded file :",${expanded_file})
+  message("    produce expanded file :" , ${expanded_file})
   
   xacro_add_xacro_file(${it} ${expanded_file})
   
