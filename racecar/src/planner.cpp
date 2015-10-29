@@ -439,7 +439,11 @@ void plan(){
 	stop();
 	planned=false;
 	planning=true;
-	MSPP_planning();
+
+	//Run the desired planner
+	RRTstar_planning();
+	//MSPP_planning();
+
 	if(planned){
 		current_path=std::deque<State<2>>();
 		current_path.assign(current_path_raw.begin(),current_path_raw.end());
