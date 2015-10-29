@@ -180,6 +180,9 @@ int main(int argc, char **argv)
 					listener.transformPoint("base_link",uturn_center,goalInOdom);
 					if(goalInOdom.point.x*goalInOdom.point.x+goalInOdom.point.y*goalInOdom.point.y>(uturn_radius+uturn_radius_hysteresis)*(uturn_radius+uturn_radius_hysteresis)){
 						if(canSwitch){
+							throttle_pub.publish(zero);
+							ros::Duration dur(1.0);
+							dur.sleep();
 							current_turn*=-1;
 							current_speed*=-1;
 							canSwitch=false;

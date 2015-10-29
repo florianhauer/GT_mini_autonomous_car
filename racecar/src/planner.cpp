@@ -297,6 +297,7 @@ void plan(){
 	//Set Tree Max Depth
 	t->setMaxDepth(depth);
 	//Depth First Obstacle Creation
+	//*
 	std::cout << "Obstacle creation " << std::setw(10) << 0.0 << "\% done.";
 	Ocount=0;
 	timerStart=time(NULL);
@@ -311,6 +312,7 @@ void plan(){
 						<< std::setw(2) << minutes << ":" 
 						<< std::setw(2) << seconds 
 						<< std::endl;
+	//*/
 	MSP<2> algo(t);
 	//Set algo parameters
 	algo.setNewNeighboorCheck(true);
