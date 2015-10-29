@@ -320,7 +320,7 @@ public:
 void RRTstar_planning(){	
     ob::StateSpacePtr space(new ob::RealVectorStateSpace(2));
     space->as<ob::RealVectorStateSpace>()->setBounds(minX(local_map->info), maxX(local_map->info));
-    space->setLongestValidSegmentFraction(0.001/(maxX(local_map->info)-minX(local_map->info)));
+    space->setLongestValidSegmentFraction(0.01/(maxX(local_map->info)-minX(local_map->info)));
     ob::SpaceInformationPtr si(new ob::SpaceInformation(space));
     si->setStateValidityChecker(ob::StateValidityCheckerPtr(new ValidityChecker(si)));
     si->setup();
@@ -333,7 +333,10 @@ void RRTstar_planning(){
     ob::ProblemDefinitionPtr pdef(new ob::ProblemDefinition(si));
     pdef->setStartAndGoalStates(start, goal);
     pdef->setOptimizationObjective(ob::OptimizationObjectivePtr(new ClearanceObjective(si)));
-    ob::PlannerPtr optimizingPlanner(new og::RRTstar(si));
+    og::RRTstar *plan_pt=new og::RRTstar(si);
+    plan_pt->setGoalBias(0.05);
+    plan_pt->setRange(1.0);
+    ob::PlannerPtr optimizingPlanner(plan_pt);
     optimizingPlanner->setProblemDefinition(pdef);
     optimizingPlanner->setup();
     ob::PlannerStatus solved;
