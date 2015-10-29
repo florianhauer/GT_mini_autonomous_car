@@ -313,13 +313,14 @@ public:
 	State<2> s2;
 	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
 	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
-        return isObstacle(s2);
+        return !isObstacle(s2);
     }
 };
 
 void RRTstar_planning(){	
     ob::StateSpacePtr space(new ob::RealVectorStateSpace(2));
     space->as<ob::RealVectorStateSpace>()->setBounds(minX(local_map->info), maxX(local_map->info));
+    space->setLongestValidSegmentFraction(0.001/(maxX(local_map->info)-minX(local_map->info)));
     ob::SpaceInformationPtr si(new ob::SpaceInformation(space));
     si->setStateValidityChecker(ob::StateValidityCheckerPtr(new ValidityChecker(si)));
     si->setup();
@@ -337,11 +338,11 @@ void RRTstar_planning(){
     optimizingPlanner->setup();
     ob::PlannerStatus solved;
     int it=0;
-    while(!solved && it<10){
+    while(solved!=ompl::base::PlannerStatus::StatusType::EXACT_SOLUTION && it<100){
 	it++;
 	solved = optimizingPlanner->solve(1.0);
     }
-    if(solved){
+    if(solved==ompl::base::PlannerStatus::StatusType::EXACT_SOLUTION){
 	std::vector< ob::State * > sol = boost::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
 	current_path_raw.resize(sol.size());
 	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), 
