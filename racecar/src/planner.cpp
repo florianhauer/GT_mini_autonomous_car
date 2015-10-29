@@ -35,6 +35,8 @@ double epsilon=0.1;
 double unknownSpaceProbability=0.5;
 
 nav_msgs::OccupancyGrid::Ptr local_map;
+Tree<2>* t=new Tree<2>();
+bool mapChanged=false;
 
 double minX (const nav_msgs::MapMetaData& info) {
 	const geometry_msgs::Polygon p=occupancy_grid_utils::gridPolygon(info);
@@ -275,44 +277,40 @@ bool checkFeasibility(){
 	return true;
 }
 
-void plan(){
-	ROS_INFO("planning");
-	//if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
-	//	return;
-	stop();
-	planned=false;
-	planning=true;
-	//TODO
-	Tree<2>* t=new Tree<2>();
-	//Set Search Space Bounds
-	State<2> minState;
-	minState[0]=minX(local_map->info);
-	minState[1]=minY(local_map->info);
-	State<2> maxState;
-	maxState[0]=maxX(local_map->info);
-	maxState[1]=maxY(local_map->info);
-	t->setStateBounds(minState,maxState);
-	std::cout << "min bound : " << minState <<std::endl;
-	std::cout << "max bound : " << maxState <<std::endl;
-	//Set Tree Max Depth
-	t->setMaxDepth(depth);
-	//Depth First Obstacle Creation
-	//*
-	std::cout << "Obstacle creation " << std::setw(10) << 0.0 << "\% done.";
-	Ocount=0;
-	timerStart=time(NULL);
-	addObstacles(t->getRootKey(),0,t->getRootKey()[0],t);
-	std::cout << std::endl;
-	time_t timerNow=time(NULL);	
-	int seconds = (int)difftime(timerNow,timerStart);
-	int hours = seconds/3600;
-	int minutes= (seconds/60)%60;
-	seconds=seconds%60;
-	std::cout << "Obstacles created in " 	<< std::setw(4) << hours << ":" 
-						<< std::setw(2) << minutes << ":" 
-						<< std::setw(2) << seconds 
-						<< std::endl;
-	//*/
+void MSPP_planning(){
+	if(mapChanged){
+		//Set Search Space Bounds
+		State<2> minState;
+		minState[0]=minX(local_map->info);
+		minState[1]=minY(local_map->info);
+		State<2> maxState;
+		maxState[0]=maxX(local_map->info);
+		maxState[1]=maxY(local_map->info);
+		t->setStateBounds(minState,maxState);
+		//std::cout << "min bound : " << minState <<std::endl;
+		//std::cout << "max bound : " << maxState <<std::endl;
+
+		// Set Tree Max Depth
+		t->setMaxDepth(depth);
+		//Depth First Obstacle Creation
+		//*
+		std::cout << "Obstacle creation " << std::setw(10) << 0.0 << "\% done.";
+		Ocount=0;
+		timerStart=time(NULL);
+		addObstacles(t->getRootKey(),0,t->getRootKey()[0],t);
+		std::cout << std::endl;
+		time_t timerNow=time(NULL);	
+		int seconds = (int)difftime(timerNow,timerStart);
+		int hours = seconds/3600;
+		int minutes= (seconds/60)%60;
+		seconds=seconds%60;
+		std::cout << "Obstacles created in " 	<< std::setw(4) << hours << ":" 
+							<< std::setw(2) << minutes << ":" 
+							<< std::setw(2) << seconds 
+							<< std::endl;
+		//*/
+		mapChanged=false;
+	}
 	MSP<2> algo(t);
 	//Set algo parameters
 	algo.setNewNeighboorCheck(true);
@@ -338,9 +336,25 @@ void plan(){
 		}
 		std::cout << std::endl;
 		current_path_raw.push_back(goalState);
+		planned=true;		
+	}else{
+		ROS_INFO("Planning failed");
+		planned=false;
+	}
+	algo.clear();
+}
+
+void plan(){
+	ROS_INFO("planning");
+	//if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
+	//	return;
+	stop();
+	planned=false;
+	planning=true;
+	MSPP_planning();
+	if(planned){
 		current_path=std::deque<State<2>>();
 		current_path.assign(current_path_raw.begin(),current_path_raw.end());
-		planned=true;
 		//*
 		std::cout << "smoothed solution" <<std::endl;
 		for(int i=0;i<current_path_raw.size();++i)
@@ -357,12 +371,7 @@ void plan(){
 		std::cout << std::endl;
 		//*/
 		setWaypoint(current_path.front());
-	}else{
-		ROS_INFO("Planning failed");
-		planned=false;
 	}
-	algo.clear();
-	free(t);
 	planning=false;
 }
 
@@ -393,6 +402,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
 	//update local map
 	local_map=occupancy_grid_utils::inflateObstacles(*msg,inflation_radius,true);
 	map_pub.publish(local_map);
+	mapChanged=true;
 	if(!checkFeasibility()){
 		plan();
 	}
@@ -430,7 +440,6 @@ int main(int argc, char **argv)
   nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.3);
   nh_rel.param("unknown_space_probability",unknownSpaceProbability,0.5);
 
-
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
   traj_pub_raw = n.advertise<visualization_msgs::Marker>("/traj_raw", 1);
   traj_pub_smooth = n.advertise<visualization_msgs::Marker>("/traj_smooth", 1);
@@ -440,10 +449,8 @@ int main(int argc, char **argv)
   ros::Subscriber pose_sub = n.subscribe("/slam_out_pose", 1, poseCallback);
   ros::Subscriber map_sub = n.subscribe("/map", 1, mapCallback);
 
-
-
-
   ros::spin();
+  free(t);
 
   return 0;
 }
