@@ -38,7 +38,7 @@ int depth=8;
 int nb_obstacle_check=100;
 double epsilon=0.1;
 double unknownSpaceProbability=0.5;
-double waypointMinDistance=0;
+double waypointMaxDistance=0;
 
 nav_msgs::OccupancyGrid::Ptr local_map;
 Tree<2>* t=new Tree<2>();
@@ -259,8 +259,8 @@ void smoothTraj(){
 
 void densifyWaypoints(){
 	for(int i=0;i<current_path.size()-1;++i){
-		if((current_path[i]-current_path[i+1]).norm()<waypointMinDistance){
-			current_path.insert(current_path.begin()+i+1,current_path[i]-(current_path[i]-current_path[i+1])*(waypointMinDistance/((current_path[i]-current_path[i+1]).norm())));
+		if((current_path[i]-current_path[i+1]).norm()<waypointMaxDistance){
+			current_path.insert(current_path.begin()+i+1,current_path[i]+(current_path[i+1]-current_path[i])*(waypointMaxDistance/((current_path[i+1]-current_path[i]).norm())));
 		}
 	}
 }
@@ -454,8 +454,8 @@ void plan(){
 	planning=true;
 
 	//Run the desired planner
-	RRTstar_planning();
-	//MSPP_planning();
+	//RRTstar_planning();
+	MSPP_planning();
 
 	if(planned){
 		current_path=std::deque<State<2>>();
@@ -464,7 +464,7 @@ void plan(){
 		std::cout << "smoothed solution" <<std::endl;
 		for(int i=0;i<current_path_raw.size();++i)
 			smoothTraj();
-		if(waypointMinDistance>0)
+		if(waypointMaxDistance>0)
 			densifyWaypoints();
 		std::cout << "Path length: " << current_path.size() << std::endl;
 		for(std::deque<State<2>>::iterator it=current_path.begin(),end=current_path.end();it!=end;++it){
@@ -544,7 +544,7 @@ int main(int argc, char **argv)
   nh_rel.param("inflation_radius",inflation_radius,0.3);
   nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.3);
   nh_rel.param("unknown_space_probability",unknownSpaceProbability,0.5);
-  nh_rel.param("waypoint_min_distance",waypointMinDistance,0.1);
+  nh_rel.param("waypoint_max_distance",waypointMaxDistance,0.1);
 
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
   traj_pub_raw = n.advertise<visualization_msgs::Marker>("/traj_raw", 1);

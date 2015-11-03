@@ -3,6 +3,7 @@
 #include <geometry_msgs/PointStamped.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
+#include <cstdlib>
 
 #define NORMAL 0
 #define UTURN 1
@@ -139,6 +140,10 @@ int main(int argc, char **argv)
 					uturn_radius=0.5*closest_obstacle;
 					current_turn=theta>0?-1:1;
 					current_speed=1;
+					if(rand()%2==0){
+						current_speed*=-1;
+						current_turn*=-1;
+					}
 					canSwitch=true;
 					std::cout << "Initiating uturn" << std::endl;
 					std::cout << "centered at " << uturn_center.point.x << " , " << uturn_center.point.y << std::endl;
