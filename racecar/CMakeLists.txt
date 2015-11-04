@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(OMPL)
+find_package(OMPL REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -151,7 +151,7 @@ foreach(it ${world_xacro_files})
   get_filename_component(basepath ${it} PATH)
   get_filename_component(basename ${it} NAME_WE)
   
-  message(" processing world file :",${basepath}," : " , ${basename})
+  message(" processing world file :" , ${basepath} , " : " , ${basename})
   
   set(expanded_file "${basepath}/${basename}.sdf")
   message("    produce expanded file :" , ${expanded_file})
