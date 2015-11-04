@@ -41,7 +41,7 @@ int depth=8;
 int nb_obstacle_check=100;
 double epsilon=0.1;
 double unknownSpaceProbability=0.5;
-double waypointMaxDistance=0;
+double waypointMaxDistance=0.1;
 
 nav_msgs::OccupancyGrid::Ptr local_map;
 Tree<2>* t=new Tree<2>();
@@ -71,12 +71,14 @@ State<2> pointState(const geometry_msgs::Point p){
 	State<2> s;
 	s[0]=p.x;
 	s[1]=p.y;
+	return s;
 }
 
 geometry_msgs::Point statePoint(const State<2> s){
 	geometry_msgs::Point p;
 	p.x=s[0];
 	p.y=s[1];
+	return p;
 }
 
 void publishTraj(){
@@ -110,7 +112,7 @@ void publishTraj(){
 	traj_visu.color.r = 0.0;
 	traj_visu.color.g = 1.0;
 
-	traj_visu.points.push_back(pose.point);
+	//traj_visu.points.push_back(pose.point);
 
 	for(int i=0;i<current_path_raw.size();++i){
 		geometry_msgs::Point p=statePoint(current_path_raw[i]);
@@ -234,7 +236,7 @@ bool addObstacles(Key<2> k, int depth, int size, Tree<2>* t){
 }
 
 bool segmentFeasibility(State<2> a,State<2> b){
-	double res=0.001;
+	double res=0.01;
 	State<2> inc=b-a;
 	double l=inc.norm();
 	inc=inc*(res/l);
@@ -265,10 +267,18 @@ void smoothTraj(){
 }
 
 void densifyWaypoints(){
-	for(int i=0;i<current_path.size()-1;++i){
-		if((current_path[i]-current_path[i+1]).norm()<waypointMaxDistance){
-			current_path.insert(current_path.begin()+i+1,current_path[i]+(current_path[i+1]-current_path[i])*(waypointMaxDistance/((current_path[i+1]-current_path[i]).norm())));
+	if(waypointMaxDistance>0){
+		std::cout << "densifying waypoints" << std::endl;
+		int count=0;
+		current_path.push_front(startState);
+		for(int i=0;i<current_path.size()-1;++i){
+			if((current_path[i]-current_path[i+1]).norm()>waypointMaxDistance){
+				count++;
+				current_path.insert(current_path.begin()+i+1,current_path[i]+(current_path[i+1]-current_path[i])*(waypointMaxDistance/((current_path[i+1]-current_path[i]).norm())));
+			}
 		}
+		current_path.pop_front();
+		std::cout << count << " points added" << std::endl;
 	}
 }
 
@@ -278,10 +288,17 @@ bool checkFeasibility(){
 		return true;
 
 	//remove first waypoint if nescessary
-	if(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<waypoint_check_distance){	
+	while(sqrt((pose.point.x-waypoint.point.x)*(pose.point.x-waypoint.point.x)+(pose.point.y-waypoint.point.y)*(pose.point.y-waypoint.point.y))<waypoint_check_distance){	
 		if(current_path.size()>1){
-			current_path.pop_front();
-			setWaypoint(current_path.front());
+			if(segmentFeasibility(startState,current_path[1])){
+				current_path.pop_front();
+				setWaypoint(current_path.front());
+			}else{
+				//create artificial waypoint so that the tracker keeps sending commands to avoid lock situation
+				State<2> s = startState + (current_path.front()-startState)*((float)(waypoint_check_distance+0.2)*(1/(current_path.front()-startState).norm()));
+				setWaypoint(s);
+				break;
+			}
 		}else{
 			return true;
 		}
@@ -327,10 +344,11 @@ double g(occupancy_grid_utils::index_t ind){
 }
 
 double h(occupancy_grid_utils::index_t ind){
-	return (1.0-lambda1)*(goalState-indexState(ind)).norm();
+	return 10*(1.0-lambda1)*(goalState-indexState(ind)).norm();
 }
 
 void Astar_planning(){
+	ROS_INFO("A star planning");
 	std::priority_queue<PQItem> open_list;
 	const unsigned num_cells = local_map->info.height*local_map->info.width;
 	std::vector<bool> seen(num_cells); // Default initialized to all false
@@ -339,8 +357,6 @@ void Astar_planning(){
 	open_list.push(PQItem(src_ind, 0, h(src_ind),src_ind));
 
 	std::vector<occupancy_grid_utils::index_t> parent(num_cells,0);
-
-
 
 	while (!open_list.empty()) {
 	    const PQItem current = open_list.top();
@@ -353,22 +369,28 @@ void Astar_planning(){
 	    ROS_DEBUG_STREAM_NAMED ("shortest_path_internal", "  Considering " << c << " with cost " <<
 		                    current.g_cost << " + " << current.h_cost);
 	    if (current.ind == dest_ind) {
+		std::cout << "solution found" << std::endl;
+	        std::cout << "Visited " << std::count(seen.begin(), seen.end(), true) << " states out of " << num_cells << std::endl;;
 		std::deque<occupancy_grid_utils::index_t> path;
 		path.push_back(dest_ind);
 		occupancy_grid_utils::index_t last = dest_ind;
 		while (parent[last]!=src_ind){
 			path.push_front(parent[last]);
-			last=parent[dest_ind];
+			last=parent[last];
 		}
+		/*for(std::deque<occupancy_grid_utils::index_t>::iterator it=path.begin(),end=path.end();it!=end;++it){
+			std::cout << occupancy_grid_utils::indexCell(local_map->info, *it) << " -- ";
+		}
+		std::cout << std::endl;*/
 		current_path_raw.resize(path.size());
 		std::transform(path.begin(), path.end(), current_path_raw.begin(), &indexState);
-		std::cout << "Path length: " << current_path_raw.size() << std::endl;
+		/*std::cout << "Path length: " << current_path_raw.size() << std::endl;
 		std::cout << "Path cost: " << current.g_cost << std::endl;
 		std::cout << "Path :" << std::endl;
 		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
 		}
-		std::cout << std::endl;
+		std::cout << std::endl;*/
 		planned=true;
 		return;
 	    }
@@ -433,6 +455,7 @@ public:
 };
 
 void RRTstar_planning(){	
+    ROS_INFO("RRT star planning");
     ob::StateSpacePtr space(new ob::RealVectorStateSpace(2));
     space->as<ob::RealVectorStateSpace>()->setBounds(minX(local_map->info), maxX(local_map->info));
     space->setLongestValidSegmentFraction(0.01/(maxX(local_map->info)-minX(local_map->info)));
@@ -464,13 +487,13 @@ void RRTstar_planning(){
 	std::vector< ob::State * > sol = boost::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
 	current_path_raw.resize(sol.size());
 	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), &obstateState);
-	std::cout << "Path length: " << pdef->getSolutionPath()->length() << std::endl;
+	/*std::cout << "Path length: " << pdef->getSolutionPath()->length() << std::endl;
 	std::cout << "Path cost: " << pdef->getSolutionPath()->cost(pdef->getOptimizationObjective()) << std::endl;
 	std::cout << "Path :" << std::endl;
 	for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 		std::cout << (*it) << " -- ";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 	planned=true;
 
     }else{
@@ -480,6 +503,7 @@ void RRTstar_planning(){
 }
 
 void MSPP_planning(){
+	ROS_INFO("MSPP planning");
 	if(mapChanged){
 		//Set Search Space Bounds
 		State<2> minState;
@@ -530,13 +554,13 @@ void MSPP_planning(){
 	if(initAlgo && algo.run()){
 		ROS_INFO_STREAM("Algo init "<<initAlgo<<", planning in progress ...");	
 		current_path_raw=algo.getPath();
-		std::cout << "Path length: " << current_path_raw.size() << std::endl;
+		/*std::cout << "Path length: " << current_path_raw.size() << std::endl;
 		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
 		std::cout << "Path :" << std::endl;
 		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
 		}
-		std::cout << std::endl;
+		std::cout << std::endl;*/
 		current_path_raw.push_back(goalState);
 		planned=true;		
 	}else{
@@ -568,14 +592,14 @@ void plan(){
 			smoothTraj();
 		if(waypointMaxDistance>0)
 			densifyWaypoints();
-		std::cout << "Path length: " << current_path.size() << std::endl;
+		/*std::cout << "Path length: " << current_path.size() << std::endl;
 		for(std::deque<State<2>>::iterator it=current_path.begin(),end=current_path.end();it!=end;++it){
 			std::cout << (*it) << " -- ";}
 		std::cout << std::endl << "raw:" <<std::endl;
 		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
 			std::cout << (*it) << " -- ";
 		}
-		std::cout << std::endl;
+		std::cout << std::endl;*/
 		//*/
 		setWaypoint(current_path.front());
 	}
