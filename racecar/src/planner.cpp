@@ -11,6 +11,7 @@
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/geometric/planners/rrt/RRTstar.h>
+#include <queue>
 
 #include <msp/MSP.h>
 
@@ -27,6 +28,8 @@ State<2> startState(0), goalState(0);
 geometry_msgs::PointStamped waypoint;
 bool planning=false;
 bool planned=false;
+
+double lambda1=0.01;
 
 std::deque<State<2>> current_path;//current pose not included
 std::deque<State<2>> current_path_raw;//current pose not included
@@ -64,6 +67,18 @@ double maxY (const nav_msgs::MapMetaData& info){
 	return max(p.points[0].y, max(p.points[1].y, max(p.points[2].y, p.points[3].y)));
 }
 
+State<2> pointState(const geometry_msgs::Point p){
+	State<2> s;
+	s[0]=p.x;
+	s[1]=p.y;
+}
+
+geometry_msgs::Point statePoint(const State<2> s){
+	geometry_msgs::Point p;
+	p.x=s[0];
+	p.y=s[1];
+}
+
 void publishTraj(){
 	visualization_msgs::Marker traj_visu;
 	traj_visu.header.frame_id="/map";
@@ -81,9 +96,7 @@ void publishTraj(){
 	traj_visu.points.push_back(pose.point);
 
 	for(int i=0;i<current_path.size();++i){
-		geometry_msgs::Point p;
-		p.x=current_path[i][0];
-		p.y=current_path[i][1];
+		geometry_msgs::Point p=statePoint(current_path[i]);
 		p.z=0.1;
 		traj_visu.points.push_back(p);
 	}
@@ -100,9 +113,7 @@ void publishTraj(){
 	traj_visu.points.push_back(pose.point);
 
 	for(int i=0;i<current_path_raw.size();++i){
-		geometry_msgs::Point p;
-		p.x=current_path_raw[i][0];
-		p.y=current_path_raw[i][1];
+		geometry_msgs::Point p=statePoint(current_path_raw[i]);
 		p.z=0.1;
 		traj_visu.points.push_back(p);
 	}
@@ -132,9 +143,7 @@ void stop(){
 bool isObstacle(State<2> state){
 	if((state-startState).norm()<inflation_radius)
 		return false;
-	geometry_msgs::Point point;
-	point.x=state[0];
-	point.y=state[1];
+	geometry_msgs::Point point=statePoint(state);
 	try{
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
 		int8_t val=local_map->data[index];
@@ -158,9 +167,7 @@ bool isObstacle(State<2> state){
 double obstacleProbability(State<2> state){
 	if((state-startState).norm()<inflation_radius)
 		return 0.0;
-	geometry_msgs::Point point;
-	point.x=state[0];
-	point.y=state[1];
+	geometry_msgs::Point point=statePoint(state);
 	try{
 		occupancy_grid_utils::index_t index=occupancy_grid_utils::pointIndex(local_map->info,point);
 		int8_t val=local_map->data[index];
@@ -291,8 +298,113 @@ bool checkFeasibility(){
 	return true;
 }
 
+struct PQItem
+{
+  occupancy_grid_utils::index_t ind;
+  double g_cost;
+  double h_cost;
+  occupancy_grid_utils::index_t parent_ind;
+  PQItem (occupancy_grid_utils::index_t ind, double g_cost, double h_cost, occupancy_grid_utils::index_t parent_ind) :
+    ind(ind), g_cost(g_cost), h_cost(h_cost), parent_ind(parent_ind) {}
+
+  bool operator< (const PQItem& i2) const
+  {
+    return ((g_cost + h_cost) > (i2.g_cost + i2.h_cost));
+  }
+};
+
+geometry_msgs::Point indexPoint(occupancy_grid_utils::index_t ind){
+	return occupancy_grid_utils::cellCenter(local_map->info,occupancy_grid_utils::indexCell(local_map->info,ind));
+}
+
+State<2> indexState(occupancy_grid_utils::index_t ind){
+	return pointState(indexPoint(ind));
+}
+
+double g(occupancy_grid_utils::index_t ind){
+	double resolution = local_map->info.resolution;
+	return resolution*(1.0-lambda1)+lambda1*obstacleProbability(indexState(ind));
+}
+
+double h(occupancy_grid_utils::index_t ind){
+	return (1.0-lambda1)*(goalState-indexState(ind)).norm();
+}
+
+void Astar_planning(){
+	std::priority_queue<PQItem> open_list;
+	const unsigned num_cells = local_map->info.height*local_map->info.width;
+	std::vector<bool> seen(num_cells); // Default initialized to all false
+	const occupancy_grid_utils::index_t dest_ind = occupancy_grid_utils::pointIndex(local_map->info,goal.point);
+	const occupancy_grid_utils::index_t src_ind = occupancy_grid_utils::pointIndex(local_map->info,pose.point);
+	open_list.push(PQItem(src_ind, 0, h(src_ind),src_ind));
+
+	std::vector<occupancy_grid_utils::index_t> parent(num_cells,0);
+
+
+
+	while (!open_list.empty()) {
+	    const PQItem current = open_list.top();
+	    open_list.pop();
+	    const occupancy_grid_utils::Cell c = occupancy_grid_utils::indexCell(local_map->info, current.ind);
+	    if (seen[current.ind])
+	      continue;
+	    parent[current.ind] = current.parent_ind;
+	    seen[current.ind] = true;
+	    ROS_DEBUG_STREAM_NAMED ("shortest_path_internal", "  Considering " << c << " with cost " <<
+		                    current.g_cost << " + " << current.h_cost);
+	    if (current.ind == dest_ind) {
+		std::deque<occupancy_grid_utils::index_t> path;
+		path.push_back(dest_ind);
+		occupancy_grid_utils::index_t last = dest_ind;
+		while (parent[last]!=src_ind){
+			path.push_front(parent[last]);
+			last=parent[dest_ind];
+		}
+		current_path_raw.resize(path.size());
+		std::transform(path.begin(), path.end(), current_path_raw.begin(), &indexState);
+		std::cout << "Path length: " << current_path_raw.size() << std::endl;
+		std::cout << "Path cost: " << current.g_cost << std::endl;
+		std::cout << "Path :" << std::endl;
+		for(std::deque<State<2>>::iterator it=current_path_raw.begin(),end=current_path_raw.end();it!=end;++it){
+			std::cout << (*it) << " -- ";
+		}
+		std::cout << std::endl;
+		planned=true;
+		return;
+	    }
+	      
+	    for (int d=-1; d<=1; d+=2) {
+		for (int vertical=0; vertical<2; vertical++) {
+			const int cx = c.x + d*(1-vertical);
+			const int cy = c.y + d*vertical;
+			if (cx>=0 && cy>=0) {
+				const occupancy_grid_utils::Cell c2((occupancy_grid_utils::coord_t) cx, (occupancy_grid_utils::coord_t) cy);
+				if (withinBounds(local_map->info, c2)) {
+					const occupancy_grid_utils::index_t ind = cellIndex(local_map->info, c2);
+					if (!isObstacle(pointState(indexPoint(ind))) && !seen[ind]) {
+						open_list.push(PQItem(ind, current.g_cost + g(ind), h(ind), current.ind));
+					}
+					//ROS_DEBUG_STREAM_COND_NAMED (g.data[ind]!=UNOCCUPIED, "shortest_path_internal",
+					//		 "  Skipping cell " << indexCell(g.info, ind) <<
+					//		 " with cost " << (unsigned) g.data[ind]);
+				}
+			}
+		}
+	    }
+	  }
+	planning=false;
+	ROS_INFO("Planning failed");
+}
+
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
+
+State<2> obstateState(const ob::State* s){
+	State<2> s2;
+	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
+	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
+	return s2;
+}
 
 class ClearanceObjective : public ob::StateCostIntegralObjective
 {
@@ -303,10 +415,7 @@ public:
     }
     ob::Cost stateCost(const ob::State* s) const
     {
-	State<2> s2;
-	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
-	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
-        return ob::Cost(1.0+obstacleProbability(s2));
+        return ob::Cost(1.0-lambda1+lambda1*obstacleProbability(obstateState(s)));
     }
 };
 class ValidityChecker : public ob::StateValidityChecker
@@ -319,10 +428,7 @@ public:
     // circular obstacle
     bool isValid(const ob::State* s) const
     {
-	State<2> s2;
-	s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
-	s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
-        return !isObstacle(s2);
+        return !isObstacle(obstateState(s));
     }
 };
 
@@ -357,12 +463,7 @@ void RRTstar_planning(){
     if(solved==ompl::base::PlannerStatus::StatusType::EXACT_SOLUTION){
 	std::vector< ob::State * > sol = boost::static_pointer_cast<og::PathGeometric>(pdef->getSolutionPath())->getStates();
 	current_path_raw.resize(sol.size());
-	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), 
-   		[](ob::State* s) -> State<2> { 
-		State<2> s2;
-		s2[0]=s->as<ob::RealVectorStateSpace::StateType>()->values[0];
-		s2[1]=s->as<ob::RealVectorStateSpace::StateType>()->values[1];
-		return s2; });
+	std::transform(sol.begin(), sol.end(), current_path_raw.begin(), &obstateState);
 	std::cout << "Path length: " << pdef->getSolutionPath()->length() << std::endl;
 	std::cout << "Path cost: " << pdef->getSolutionPath()->cost(pdef->getOptimizationObjective()) << std::endl;
 	std::cout << "Path :" << std::endl;
@@ -419,7 +520,7 @@ void MSPP_planning(){
 	algo.setSpeedUp(true);
 	algo.setAlpha(2*sqrt(2));
 	algo.setEpsilon(epsilon);
-	algo.setLambda1(0.01);
+	algo.setLambda1(lambda1);
 	//algo.setMinRGcalc(true);
 	bool initAlgo=algo.init(startState,goalState);
 	std::cout << "start : " << startState <<std::endl;
@@ -455,7 +556,8 @@ void plan(){
 
 	//Run the desired planner
 	//RRTstar_planning();
-	MSPP_planning();
+	//MSPP_planning();
+	Astar_planning();
 
 	if(planned){
 		current_path=std::deque<State<2>>();
