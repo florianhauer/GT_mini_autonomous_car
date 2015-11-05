@@ -42,6 +42,7 @@ int nb_obstacle_check=100;
 double epsilon=0.1;
 double unknownSpaceProbability=0.5;
 double waypointMaxDistance=0.1;
+bool keepMoving=true;
 
 nav_msgs::OccupancyGrid::Ptr local_map;
 Tree<2>* t=new Tree<2>();
@@ -353,7 +354,7 @@ void Astar_planning(){
 	const unsigned num_cells = local_map->info.height*local_map->info.width;
 	std::vector<bool> seen(num_cells); // Default initialized to all false
 	const occupancy_grid_utils::index_t dest_ind = occupancy_grid_utils::pointIndex(local_map->info,goal.point);
-	const occupancy_grid_utils::index_t src_ind = occupancy_grid_utils::pointIndex(local_map->info,pose.point);
+	const occupancy_grid_utils::index_t src_ind = occupancy_grid_utils::pointIndex(local_map->info,statePoint(startState));
 	open_list.push(PQItem(src_ind, 0, h(src_ind),src_ind));
 
 	std::vector<occupancy_grid_utils::index_t> parent(num_cells,0);
@@ -446,8 +447,6 @@ public:
     ValidityChecker(const ob::SpaceInformationPtr& si) :
         ob::StateValidityChecker(si) {}
 
-    // Returns whether the given state's position overlaps the
-    // circular obstacle
     bool isValid(const ob::State* s) const
     {
         return !isObstacle(obstateState(s));
@@ -574,7 +573,22 @@ void plan(){
 	ROS_INFO("planning");
 	//if((ros::Time::now()-local_map->header.stamp)>ros::Duration(5.0))
 	//	return;
-	stop();
+	if(keepMoving){
+		if(planned && current_path.size()>0){
+			//look for farther free space straighline of previous trajectory
+			int i=0;
+			while(i<current_path.size() && segmentFeasibility(startState,current_path[i])){
+				++i;
+			}
+			--i;
+			//set and send the waypoint
+			setWaypoint(current_path[i]);
+			//plan from that waypoint
+			startState=current_path[i];
+		}
+	}else{
+		stop();
+	}
 	planned=false;
 	planning=true;
 
@@ -588,7 +602,8 @@ void plan(){
 		current_path.assign(current_path_raw.begin(),current_path_raw.end());
 		//*
 		std::cout << "smoothed solution" <<std::endl;
-		for(int i=0;i<current_path_raw.size();++i)
+		//for(int i=0;i<current_path_raw.size();++i)
+		for(int i=0;i<5;++i)
 			smoothTraj();
 		if(waypointMaxDistance>0)
 			densifyWaypoints();
@@ -671,6 +686,7 @@ int main(int argc, char **argv)
   nh_rel.param("waypoint_check_distance",waypoint_check_distance,0.3);
   nh_rel.param("unknown_space_probability",unknownSpaceProbability,0.5);
   nh_rel.param("waypoint_max_distance",waypointMaxDistance,0.1);
+  nh_rel.param("keep_moving",keepMoving,true);
 
   waypoint_pub = n.advertise<geometry_msgs::PointStamped>("/waypoint", 1);
   traj_pub_raw = n.advertise<visualization_msgs::Marker>("/traj_raw", 1);

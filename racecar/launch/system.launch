@@ -67,6 +67,8 @@
     <param name="unknown_space_probability" value="0.4" />
     <param name="inflation_radius" value="0.4" />
     <param name="waypoint_check_distance" value="$(arg waypoint_check_distance)" />
+    <param name="waypoint_max_distance" value="0.2" />
+    <param name="keep_moving" value="false" />
   </node>
 
   <include file="$(find racecar)/launch/mapping.launch" />
