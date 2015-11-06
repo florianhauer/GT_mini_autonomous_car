@@ -237,7 +237,7 @@ bool addObstacles(Key<2> k, int depth, int size, Tree<2>* t){
 }
 
 bool segmentFeasibility(State<2> a,State<2> b){
-	double res=0.01;
+	double res=0.05;
 	State<2> inc=b-a;
 	double l=inc.norm();
 	inc=inc*(res/l);
@@ -581,10 +581,11 @@ void plan(){
 				++i;
 			}
 			--i;
+			State<2> s=startState+(current_path[i]-startState)*std::min((current_path[i]-startState).norm(),1.0f)*(1/(current_path[i]-startState).norm());
 			//set and send the waypoint
-			setWaypoint(current_path[i]);
+			setWaypoint(s);
 			//plan from that waypoint
-			startState=current_path[i];
+			startState=s;
 		}
 	}else{
 		stop();
@@ -603,7 +604,7 @@ void plan(){
 		//*
 		std::cout << "smoothed solution" <<std::endl;
 		//for(int i=0;i<current_path_raw.size();++i)
-		for(int i=0;i<5;++i)
+		for(int i=0;i<1;++i)
 			smoothTraj();
 		if(waypointMaxDistance>0)
 			densifyWaypoints();
