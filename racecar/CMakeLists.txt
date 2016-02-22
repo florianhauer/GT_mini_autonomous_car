@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
    std_msgs
    ackermann_msgs
    geometry_msgs
+   sensor_msgs
    message_generation
    roscpp
    interactive_markers
@@ -89,7 +90,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES racecar_launch
 #  CATKIN_DEPENDS other_catkin_pkg 
-  DEPENDS message_runtime std_msgs geometry_msgs tf occupancy_grid_utils ackermann_msgs
+  DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs tf occupancy_grid_utils ackermann_msgs
 )
 
 ###########
@@ -123,6 +124,9 @@ target_link_libraries(planner ${catkin_LIBRARIES}  ${OMPL_LIBRARIES})
 
 add_executable(servo_command_to_simu src/servo_command_to_simu.cpp)
 target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
+
+add_executable(joint_publisher src/joint_publisher.cpp)
+target_link_libraries(joint_publisher ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

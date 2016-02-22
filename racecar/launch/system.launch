@@ -5,7 +5,16 @@
    <arg name="world_name" default="/usr/share/gazebo-2.2/worlds/willowgarage.world"/>
    <!-- <arg name="world_name" default="$(find racecar)/worlds/maze.sdf"/> -->
    <arg name="waypoint_check_distance" default="0.5"/>
-   <arg name="run_camera" default="false"/>
+   <arg name="run_camera" default="true"/>
+
+  <!-- Robot Description for Rviz visualization -->
+    <param name="robot_description"
+           command="$(find xacro)/xacro.py $(find gt_car_vehicle_description)/urdf/gt_car.urdf.xacro"/>
+<node pkg="racecar" type="joint_publisher" name="joint_publisher" output="screen">
+    <param name="frequency" value="100" />
+  </node>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_pub" output="screen"/>
+
 
   <!-- Group to launch to simulate the system -->
   <group if="$(arg simu)">
@@ -37,7 +46,7 @@
   <!-- Nodes that are launched for both the simulation and the real system -->
 
   <node pkg="rosbag" type="record" name="bag_recorder"
-	args="record -O /home/flo/bags/last_run.bag -a" /> 
+	args="record -O /media/DATA/bags/last_run.bag -a" /> 
 	
   <node pkg="racecar" type="laser_to_estop" name="laser_to_estop" output="screen">
     <param name="filter_alpha" value="0.95" />
