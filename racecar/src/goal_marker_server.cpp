@@ -1,8 +1,22 @@
 #include <interactive_markers/interactive_marker_server.h>
 #include <geometry_msgs/PointStamped.h>
+#include <thread>
+#include <chrono>
 
 ros::Publisher goal_pub;
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
+geometry_msgs::PointStamped pose_msg;
+
+void send(){
+	goal_pub.publish(pose_msg);
+}
+
+void sender(){
+	while(true){
+        	std::this_thread::sleep_for(std::chrono::seconds(10));
+		send();
+	}
+}
 
 void processFeedback(
     const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
@@ -11,10 +25,9 @@ void processFeedback(
 	  /*ROS_INFO_STREAM( feedback->marker_name << " is now at "
 		  << feedback->pose.position.x << ", " << feedback->pose.position.y
 		  << ", " << feedback->pose.position.z );*/
-	  geometry_msgs::PointStamped pose_msg;
 	  pose_msg.point=feedback->pose.position;
 	  pose_msg.header=feedback->header;
-	  goal_pub.publish(pose_msg);
+	  send();
 	  server->setPose(feedback->marker_name,feedback->pose);
 	  server->applyChanges();
 	}
@@ -79,6 +92,9 @@ int main(int argc, char** argv)
 
   // 'commit' changes and send to all clients
   server->applyChanges();
+
+  // start thread to refresh the goal topic every 10 seconds
+  std::thread refresh_thread (sender);  
 
   // start the ROS main loop
   ros::spin();
