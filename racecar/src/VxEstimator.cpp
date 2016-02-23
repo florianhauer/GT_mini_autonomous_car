@@ -8,7 +8,7 @@ double learning_rate=0.05;
 
 void callback(const px_comm::OpticalFlow::ConstPtr& msg)
 {
-	vx+=learning_rate*(msg->velocity_x-vx);
+	vx+=learning_rate*(-msg->velocity_y-vx);
 	std_msgs::Float64 vx_msg;
 	vx_msg.data=vx;
 	pub.publish(vx_msg);
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh_rel=ros::NodeHandle("~");
 
-  nh_rel.param("learning_rate",learning_rate,0.05);
+  nh_rel.param("learning_rate",learning_rate,0.1);
 
   pub = n.advertise<std_msgs::Float64>("/vx_filtered", 1);
 

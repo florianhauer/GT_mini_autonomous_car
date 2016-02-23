@@ -128,6 +128,9 @@ target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
 add_executable(joint_publisher src/joint_publisher.cpp)
 target_link_libraries(joint_publisher ${catkin_LIBRARIES})
 
+add_executable(VxEstimatorFromSlam src/VxEstimatorFromSlam.cpp)
+target_link_libraries(VxEstimatorFromSlam ${catkin_LIBRARIES})
+
 add_executable(VxEstimator src/VxEstimator.cpp)
 target_link_libraries(VxEstimator ${catkin_LIBRARIES})
 

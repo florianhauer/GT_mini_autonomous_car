@@ -81,7 +81,7 @@ class joy_to_tsb:
         if brake > 0:
             brake = brake * self.brake_positive_gain
         elif brake < 0:
-            brake = brake * self.brake_negative_gain
+            brake = 0
 
         # limit commands
         if throttle > 1:
@@ -96,8 +96,6 @@ class joy_to_tsb:
 
         if brake > 1:
             brake = 1
-        elif brake < -1:
-            brake = -1
 
 	msg = ThrottleBrakeSteering()
 	msg.throttle = throttle

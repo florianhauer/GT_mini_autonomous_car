@@ -7,8 +7,8 @@
 -->
 
 <launch>
-  <arg name="estop_button" default="1" />
-  <arg name="release_estop_button" default="0" />
+  <arg name="estop_button" default="2" />
+  <arg name="release_estop_button" default="1" />
 
   <node pkg="joy_to_servo" type="joy_to_emergency_stop.py" name="joy_to_emergency_stop" output="screen">
     <param name="estop_button" value="$(arg estop_button)" />

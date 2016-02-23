@@ -54,8 +54,8 @@ int main(int argc, char **argv)
   double frequency,max_brake,max_throttle,vx_thres;
   nh_rel.param("frequency",frequency,100.0);
   nh_rel.param("max_brake",max_brake,1.0);
-  nh_rel.param("max_throttle",max_throttle,0.1);
-  nh_rel.param("vx_thres",max_throttle,0.5);
+  nh_rel.param("max_throttle",max_throttle,0.4);
+  nh_rel.param("vx_thres",vx_thres,0.2);
 
   ros::Rate rate(frequency);
 
@@ -73,7 +73,11 @@ int main(int argc, char **argv)
       }
       if(b>0){
 	//brake
-	t_msg.data=-max_brake*sign(vx);
+	if(fabs(vx)>vx_thres){
+		t_msg.data=-max_brake*sign(vx);
+	}else{
+		t_msg.data=0;
+	}
       }else{
 	if(t*vx<0){
 		if(fabs(vx)>vx_thres/2){
@@ -85,6 +89,7 @@ int main(int argc, char **argv)
 		t_msg.data=sat(t,max_throttle);
 	}
       }
+      //t_msg.data=0.5*sign(t_msg.data)+0.5*t_msg.data;
       s_msg.data=s;
       throttle_pub.publish(t_msg);
       steering_pub.publish(s_msg);
