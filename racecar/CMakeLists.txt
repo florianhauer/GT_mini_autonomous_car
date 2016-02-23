@@ -54,7 +54,7 @@ find_package(OMPL REQUIRED)
  add_message_files(
    FILES
    EmergencyStop.msg
-#   Message2.msg
+   ThrottleBrakeSteering.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -127,6 +127,12 @@ target_link_libraries(servo_command_to_simu ${catkin_LIBRARIES})
 
 add_executable(joint_publisher src/joint_publisher.cpp)
 target_link_libraries(joint_publisher ${catkin_LIBRARIES})
+
+add_executable(VxEstimator src/VxEstimator.cpp)
+target_link_libraries(VxEstimator ${catkin_LIBRARIES})
+
+add_executable(tbs2ts src/tbs2ts.cpp)
+target_link_libraries(tbs2ts ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
