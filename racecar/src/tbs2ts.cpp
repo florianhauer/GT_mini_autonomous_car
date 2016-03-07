@@ -67,19 +67,20 @@ int main(int argc, char **argv)
       t=throttle;
       b=brake;
       s=steering;
-      if(t*vx<0 && fabs(vx)>vx_thres){
+      /*if(t*vx<0 && fabs(vx)>vx_thres){
 	t=0;
 	b=1;
-      }
+      }*/
       if(b>0){
 	//brake
-	if(fabs(vx)>vx_thres){
+	/*if(fabs(vx)>vx_thres){
 		t_msg.data=-max_brake*sign(vx);
 	}else{
 		t_msg.data=0;
-	}
+	}*/
+	t_msg.data=-1;
       }else{
-	if(t*vx<0){
+	/*if(t*vx<0){
 		if(fabs(vx)>vx_thres/2){
 			t_msg.data=0;
 		}else{
@@ -88,6 +89,8 @@ int main(int argc, char **argv)
 	}else{
 		t_msg.data=sat(t,max_throttle);
 	}
+	*/
+	t_msg.data=sat(t,max_throttle);
       }
       //t_msg.data=0.5*sign(t_msg.data)+0.5*t_msg.data;
       s_msg.data=s;

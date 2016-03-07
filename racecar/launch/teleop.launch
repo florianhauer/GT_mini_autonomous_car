@@ -13,7 +13,7 @@
   <include file="$(find racecar)/launch/includes/steering.launch.xml" />
   <include file="$(find racecar)/launch/includes/throttle.launch.xml" />
 
-    <include file="$(find racecar)/launch/includes/sensors.launch.xml">
+    <!-- <include file="$(find racecar)/launch/includes/sensors.launch.xml">
       <arg name="run_camera" value="false" />
     </include> 
   <include file="$(find racecar)/launch/mapping.launch" />
@@ -24,11 +24,11 @@
   <node pkg="racecar" type="VxEstimatorFromSlam" name="VxEstimatorSlam" output="screen">
 	<param name="frequency" value="50"/>
 	<param name="learning_rate" value="0.3"/>
-  </node>
+  </node> -->
   <node pkg="racecar" type="tbs2ts" name="tbs2ts" output="screen">
 	<param name="frequency" value="100"/>
 	<param name="max_brake" value="1"/>
-	<param name="max_throttle" value="0.4"/>
+	<param name="max_throttle" value="0.3"/>
 	<param name="vx_thres" value="0.5"/>
   </node>
 
